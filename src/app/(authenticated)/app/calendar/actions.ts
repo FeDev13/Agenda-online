@@ -1,0 +1,63 @@
+"use server";
+
+import { createDeadlineSchema, createEventSchema } from "@/features/cases/validation";
+import { toUserMessage } from "@/lib/server/errors";
+import { createDeadline, createEvent } from "@/lib/server/scheduling";
+
+export type ScheduleFormState = {
+  message: string | null;
+  ok: boolean;
+};
+
+export async function createEventAction(_state: ScheduleFormState, formData: FormData) {
+  const parsed = createEventSchema.safeParse({
+    caseId: formData.get("caseId"),
+    description: formData.get("description"),
+    endsAtLocal: formData.get("endsAtLocal"),
+    location: formData.get("location"),
+    startsAtLocal: formData.get("startsAtLocal"),
+    timezone: formData.get("timezone"),
+    title: formData.get("title")
+  });
+
+  if (!parsed.success) {
+    return {
+      message: parsed.error.issues[0]?.message ?? "Check the event fields.",
+      ok: false
+    };
+  }
+
+  try {
+    await createEvent(parsed.data);
+    return { message: "Event created.", ok: true };
+  } catch (error) {
+    return { message: toUserMessage(error), ok: false };
+  }
+}
+
+export async function createDeadlineAction(
+  _state: ScheduleFormState,
+  formData: FormData
+) {
+  const parsed = createDeadlineSchema.safeParse({
+    calculationNotes: formData.get("calculationNotes"),
+    caseId: formData.get("caseId"),
+    dueOn: formData.get("dueOn"),
+    ruleSource: formData.get("ruleSource"),
+    title: formData.get("title")
+  });
+
+  if (!parsed.success) {
+    return {
+      message: parsed.error.issues[0]?.message ?? "Check the deadline fields.",
+      ok: false
+    };
+  }
+
+  try {
+    await createDeadline(parsed.data);
+    return { message: "Deadline created.", ok: true };
+  } catch (error) {
+    return { message: toUserMessage(error), ok: false };
+  }
+}
