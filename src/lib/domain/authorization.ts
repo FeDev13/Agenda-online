@@ -23,6 +23,10 @@ export function canManageCaseAssignments(role: FirmRole) {
   return role === "admin" || role === "lawyer";
 }
 
+export function canManageFirmMemberships(role: FirmRole) {
+  return role === "admin";
+}
+
 export function canManageCaseWork(role: FirmRole) {
   return role === "admin" || role === "lawyer" || role === "paralegal";
 }

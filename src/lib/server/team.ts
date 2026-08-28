@@ -2,12 +2,20 @@ import "server-only";
 
 import { revalidatePath } from "next/cache";
 
-import type { AssignCaseMemberInput } from "@/features/team/validation";
-import { canManageCaseAssignments } from "@/lib/domain/authorization";
+import type {
+  AssignCaseMemberInput,
+  DeactivateFirmMemberInput,
+  RemoveCaseAssignmentInput,
+  UpdateFirmMemberRoleInput
+} from "@/features/team/validation";
+import {
+  canManageCaseAssignments,
+  canManageFirmMemberships
+} from "@/lib/domain/authorization";
 import { requireActiveMembership } from "@/lib/server/auth";
 import { UserFacingError } from "@/lib/server/errors";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { FirmRole, MembershipStatus } from "@/types/database";
+import type { FirmRole, Json, MembershipStatus } from "@/types/database";
 
 export type FirmMemberSummary = {
   assignmentCount: number;
@@ -29,7 +37,19 @@ export type CaseAssignmentSummary = {
   role: string;
 };
 
+export type AuditEntrySummary = {
+  action: string;
+  actorEmail: string;
+  actorName: string | null;
+  createdAt: string;
+  id: string;
+  metadata: Json;
+  targetId: string | null;
+  targetTable: string;
+};
+
 type MembershipRow = {
+  id: string;
   profile_id: string;
   role: FirmRole;
   status: MembershipStatus;
@@ -54,17 +74,32 @@ type CaseRow = {
   title: string;
 };
 
+type AuditLogRow = {
+  action: string;
+  actor_profile_id: string | null;
+  created_at: string;
+  id: string;
+  metadata: Json;
+  target_id: string | null;
+  target_table: string;
+};
+
 export async function listFirmMembers(): Promise<FirmMemberSummary[]> {
   const { membership } = await requireActiveMembership();
   const supabase = await createSupabaseServerClient();
+  const canReadInactiveMembers = canManageFirmMemberships(membership.role);
 
   const [{ data: memberships, error }, { data: assignments, error: assignmentsError }] =
     await Promise.all([
       supabase
         .from("firm_memberships")
-        .select("profile_id,role,status")
+        .select("id,profile_id,role,status")
         .eq("firm_id", membership.firmId)
-        .eq("status", "active")
+        .in(
+          "status",
+          canReadInactiveMembers ? ["active", "disabled", "invited"] : ["active"]
+        )
+        .order("status", { ascending: true })
         .order("role", { ascending: true }),
       supabase.from("case_members").select("profile_id").eq("firm_id", membership.firmId)
     ]);
@@ -170,6 +205,47 @@ export async function listCaseAssignments(): Promise<CaseAssignmentSummary[]> {
   });
 }
 
+export async function listRecentAuditEntries(limit = 20): Promise<AuditEntrySummary[]> {
+  const { membership } = await requireActiveMembership();
+
+  if (!canManageCaseAssignments(membership.role)) {
+    return [];
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("audit_log")
+    .select("id,actor_profile_id,action,target_table,target_id,metadata,created_at")
+    .eq("firm_id", membership.firmId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    throw new UserFacingError("No se pudo cargar el registro de auditoría.");
+  }
+
+  const rows = (data ?? []) as AuditLogRow[];
+  const actorIds = rows
+    .map((row) => row.actor_profile_id)
+    .filter((actorId): actorId is string => Boolean(actorId));
+  const profilesById = await getProfilesById(actorIds);
+
+  return rows.map((row) => {
+    const actor = row.actor_profile_id ? profilesById.get(row.actor_profile_id) : null;
+
+    return {
+      action: row.action,
+      actorEmail: actor?.email ?? "Usuario no identificado",
+      actorName: actor?.display_name ?? null,
+      createdAt: row.created_at,
+      id: row.id,
+      metadata: row.metadata,
+      targetId: row.target_id,
+      targetTable: row.target_table
+    };
+  });
+}
+
 export async function assignCaseMember(input: AssignCaseMemberInput) {
   const { membership, user } = await requireActiveMembership();
 
@@ -180,42 +256,303 @@ export async function assignCaseMember(input: AssignCaseMemberInput) {
   }
 
   const supabase = await createSupabaseServerClient();
-  const [{ data: targetMembership }, { data: targetCase }] = await Promise.all([
-    supabase
-      .from("firm_memberships")
-      .select("profile_id")
-      .eq("firm_id", membership.firmId)
-      .eq("profile_id", input.profileId)
-      .eq("status", "active")
-      .maybeSingle(),
-    supabase
-      .from("cases")
-      .select("id")
-      .eq("firm_id", membership.firmId)
-      .eq("id", input.caseId)
-      .eq("status", "open")
-      .maybeSingle()
-  ]);
+  const [{ data: targetMembership }, { data: targetCase }, { data: existingAssignment }] =
+    await Promise.all([
+      supabase
+        .from("firm_memberships")
+        .select("profile_id")
+        .eq("firm_id", membership.firmId)
+        .eq("profile_id", input.profileId)
+        .eq("status", "active")
+        .maybeSingle(),
+      supabase
+        .from("cases")
+        .select("id")
+        .eq("firm_id", membership.firmId)
+        .eq("id", input.caseId)
+        .eq("status", "open")
+        .maybeSingle(),
+      supabase
+        .from("case_members")
+        .select("id,role")
+        .eq("firm_id", membership.firmId)
+        .eq("case_id", input.caseId)
+        .eq("profile_id", input.profileId)
+        .maybeSingle()
+    ]);
 
   if (!targetMembership || !targetCase) {
     throw new UserFacingError("Seleccioná un integrante activo y una causa abierta.");
   }
 
-  const { error } = await supabase.from("case_members").upsert(
-    {
-      assigned_by: user.id,
-      case_id: input.caseId,
-      firm_id: membership.firmId,
-      profile_id: input.profileId,
-      role: input.role
-    },
-    { onConflict: "firm_id,case_id,profile_id" }
-  );
+  const { data: assignment, error } = await supabase
+    .from("case_members")
+    .upsert(
+      {
+        assigned_by: user.id,
+        case_id: input.caseId,
+        firm_id: membership.firmId,
+        profile_id: input.profileId,
+        role: input.role
+      },
+      { onConflict: "firm_id,case_id,profile_id" }
+    )
+    .select("id")
+    .single();
 
-  if (error) {
+  if (error || !assignment) {
     throw new UserFacingError("No se pudo asignar el acceso a la causa.");
   }
 
+  await appendAuditLog(
+    membership.firmId,
+    user.id,
+    "case_member.assigned",
+    "case_members",
+    assignment.id,
+    {
+      case_id: input.caseId,
+      new_role: input.role,
+      previous_role: existingAssignment?.role ?? null,
+      profile_id: input.profileId
+    }
+  );
+  revalidatePath("/app/team");
+  revalidatePath("/app/cases");
+  revalidatePath("/app/calendar");
+}
+
+export async function removeCaseAssignment(input: RemoveCaseAssignmentInput) {
+  const { membership, user } = await requireActiveMembership();
+
+  if (!canManageCaseAssignments(membership.role)) {
+    throw new UserFacingError(
+      "Solo administración y abogados pueden remover acceso a causas."
+    );
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data: assignment, error: assignmentError } = await supabase
+    .from("case_members")
+    .select("id,role")
+    .eq("firm_id", membership.firmId)
+    .eq("case_id", input.caseId)
+    .eq("profile_id", input.profileId)
+    .maybeSingle();
+
+  if (assignmentError || !assignment) {
+    throw new UserFacingError("Seleccioná una asignación existente.");
+  }
+
+  const { error } = await supabase
+    .from("case_members")
+    .delete()
+    .eq("firm_id", membership.firmId)
+    .eq("case_id", input.caseId)
+    .eq("profile_id", input.profileId);
+
+  if (error) {
+    throw new UserFacingError("No se pudo remover el acceso a la causa.");
+  }
+
+  await appendAuditLog(
+    membership.firmId,
+    user.id,
+    "case_member.removed",
+    "case_members",
+    assignment.id,
+    {
+      case_id: input.caseId,
+      previous_role: assignment.role,
+      profile_id: input.profileId
+    }
+  );
+  revalidateTeamSurfaces();
+}
+
+export async function updateFirmMemberRole(input: UpdateFirmMemberRoleInput) {
+  const { membership, user } = await requireActiveMembership();
+
+  if (!canManageFirmMemberships(membership.role)) {
+    throw new UserFacingError("Solo administración puede cambiar roles del equipo.");
+  }
+
+  if (input.profileId === user.id) {
+    throw new UserFacingError("No podés cambiar tu propio rol.");
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data: targetMembership, error: targetError } = await supabase
+    .from("firm_memberships")
+    .select("id,profile_id,role,status")
+    .eq("firm_id", membership.firmId)
+    .eq("profile_id", input.profileId)
+    .maybeSingle();
+
+  if (targetError || !targetMembership || targetMembership.status !== "active") {
+    throw new UserFacingError("Seleccioná un integrante activo.");
+  }
+
+  if (targetMembership.role === "admin" && input.role !== "admin") {
+    await ensureAnotherActiveAdmin(membership.firmId, input.profileId);
+  }
+
+  const { error } = await supabase
+    .from("firm_memberships")
+    .update({ role: input.role })
+    .eq("firm_id", membership.firmId)
+    .eq("profile_id", input.profileId);
+
+  if (error) {
+    throw new UserFacingError("No se pudo actualizar el rol del integrante.");
+  }
+
+  await appendAuditLog(
+    membership.firmId,
+    user.id,
+    "membership.role_updated",
+    "firm_memberships",
+    targetMembership.id,
+    {
+      new_role: input.role,
+      previous_role: targetMembership.role,
+      profile_id: input.profileId
+    }
+  );
+  revalidateTeamSurfaces();
+}
+
+export async function deactivateFirmMember(input: DeactivateFirmMemberInput) {
+  const { membership, user } = await requireActiveMembership();
+
+  if (!canManageFirmMemberships(membership.role)) {
+    throw new UserFacingError("Solo administración puede desactivar integrantes.");
+  }
+
+  if (input.profileId === user.id) {
+    throw new UserFacingError("No podés desactivar tu propia cuenta.");
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data: targetMembership, error: targetError } = await supabase
+    .from("firm_memberships")
+    .select("id,profile_id,role,status")
+    .eq("firm_id", membership.firmId)
+    .eq("profile_id", input.profileId)
+    .maybeSingle();
+
+  if (targetError || !targetMembership || targetMembership.status !== "active") {
+    throw new UserFacingError("Seleccioná un integrante activo.");
+  }
+
+  if (targetMembership.role === "admin") {
+    await ensureAnotherActiveAdmin(membership.firmId, input.profileId);
+  }
+
+  const { data: removableAssignments, error: removableAssignmentsError } = await supabase
+    .from("case_members")
+    .select("id,case_id,role")
+    .eq("firm_id", membership.firmId)
+    .eq("profile_id", input.profileId);
+
+  if (removableAssignmentsError) {
+    throw new UserFacingError("No se pudieron cargar las asignaciones del integrante.");
+  }
+
+  const { error } = await supabase
+    .from("firm_memberships")
+    .update({ status: "disabled" })
+    .eq("firm_id", membership.firmId)
+    .eq("profile_id", input.profileId);
+
+  if (error) {
+    throw new UserFacingError("No se pudo desactivar el integrante.");
+  }
+
+  const { error: assignmentsError } = await supabase
+    .from("case_members")
+    .delete()
+    .eq("firm_id", membership.firmId)
+    .eq("profile_id", input.profileId);
+
+  if (assignmentsError) {
+    throw new UserFacingError("No se pudieron remover las asignaciones del integrante.");
+  }
+
+  await appendAuditLog(
+    membership.firmId,
+    user.id,
+    "membership.disabled",
+    "firm_memberships",
+    targetMembership.id,
+    {
+      previous_role: targetMembership.role,
+      profile_id: input.profileId,
+      removed_assignment_count: removableAssignments?.length ?? 0
+    }
+  );
+  revalidateTeamSurfaces();
+}
+
+async function ensureAnotherActiveAdmin(firmId: string, excludedProfileId: string) {
+  const supabase = await createSupabaseServerClient();
+  const { count, error } = await supabase
+    .from("firm_memberships")
+    .select("profile_id", { count: "exact", head: true })
+    .eq("firm_id", firmId)
+    .eq("role", "admin")
+    .eq("status", "active")
+    .neq("profile_id", excludedProfileId);
+
+  if (error || !count) {
+    throw new UserFacingError(
+      "El estudio debe conservar al menos una cuenta administradora activa."
+    );
+  }
+}
+
+async function getProfilesById(profileIds: string[]) {
+  const uniqueProfileIds = [...new Set(profileIds)];
+
+  if (!uniqueProfileIds.length) {
+    return new Map<string, ProfileRow>();
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id,display_name,email")
+    .in("id", uniqueProfileIds);
+
+  if (error) {
+    throw new UserFacingError("No se pudieron cargar los integrantes del equipo.");
+  }
+
+  return new Map(((data ?? []) as ProfileRow[]).map((profile) => [profile.id, profile]));
+}
+
+async function appendAuditLog(
+  firmId: string,
+  actorProfileId: string,
+  action: string,
+  targetTable: string,
+  targetId: string,
+  metadata: Json = {}
+) {
+  const supabase = await createSupabaseServerClient();
+
+  await supabase.from("audit_log").insert({
+    action,
+    actor_profile_id: actorProfileId,
+    firm_id: firmId,
+    metadata,
+    target_id: targetId,
+    target_table: targetTable
+  });
+}
+
+function revalidateTeamSurfaces() {
+  revalidatePath("/app");
   revalidatePath("/app/team");
   revalidatePath("/app/cases");
   revalidatePath("/app/calendar");

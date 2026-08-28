@@ -522,7 +522,7 @@ export async function createSignedDocumentDownloadUrl(
   caseId: string,
   documentId: string
 ) {
-  const { membership } = await requireActiveMembership();
+  const { membership, user } = await requireActiveMembership();
   const supabase = await createSupabaseServerClient();
 
   const { data, error } = await supabase
@@ -540,7 +540,7 @@ export async function createSignedDocumentDownloadUrl(
 
   const document = data as Pick<
     DocumentRow,
-    "display_name" | "storage_bucket" | "storage_path"
+    "display_name" | "id" | "storage_bucket" | "storage_path"
   >;
   const { data: signedUrl, error: signedUrlError } = await supabase.storage
     .from(document.storage_bucket)
@@ -551,6 +551,14 @@ export async function createSignedDocumentDownloadUrl(
   if (signedUrlError || !signedUrl?.signedUrl) {
     throw new UserFacingError("No se pudo preparar la descarga del documento.");
   }
+
+  await appendAuditLog(
+    membership.firmId,
+    user.id,
+    "document.download_prepared",
+    "documents",
+    document.id
+  );
 
   return signedUrl.signedUrl;
 }

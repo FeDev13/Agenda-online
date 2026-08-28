@@ -27,6 +27,33 @@ describe("route smoke checks", () => {
     expect(layout).toContain("signOutAction");
   });
 
+  it("exposes team lifecycle, assignment removal, and audit controls", () => {
+    const teamPage = readFileSync(
+      join(process.cwd(), "src/app/(authenticated)/app/team/page.tsx"),
+      "utf8"
+    );
+    const teamActions = readFileSync(
+      join(process.cwd(), "src/app/(authenticated)/app/team/actions.ts"),
+      "utf8"
+    );
+
+    expect(teamPage).toContain("Integrantes del estudio");
+    expect(teamPage).toContain("Remover acceso");
+    expect(teamPage).toContain("Auditoría reciente");
+    expect(teamActions).toContain("deactivateFirmMemberAction");
+    expect(teamActions).toContain("removeCaseAssignmentAction");
+    expect(teamActions).toContain("updateFirmMemberRoleAction");
+  });
+
+  it("audits document download preparation", () => {
+    const caseDetail = readFileSync(
+      join(process.cwd(), "src/lib/server/case-detail.ts"),
+      "utf8"
+    );
+
+    expect(caseDetail).toContain("document.download_prepared");
+  });
+
   it("links open cases to the case detail workflow", () => {
     const casesPage = readFileSync(
       join(process.cwd(), "src/app/(authenticated)/app/cases/page.tsx"),

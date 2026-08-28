@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(12);
+select plan(14);
 
 insert into auth.users (
   id,
@@ -250,6 +250,36 @@ select is(
   (select due_on::text from public.case_deadlines where title = 'Vencimiento sintetico de presentacion'),
   '2026-09-15',
   'deadline preserves date-only semantics'
+);
+
+select set_config('request.jwt.claim.sub', 'aaaaaaaa-0000-4000-8000-000000000001', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"aaaaaaaa-0000-4000-8000-000000000001","role":"authenticated"}',
+  true
+);
+
+select lives_ok(
+  $$
+    delete from public.case_members
+    where firm_id = '20000000-0000-4000-8000-000000000001'
+      and case_id = '22000000-0000-4000-8000-000000000001'
+      and profile_id = 'aaaaaaaa-0000-4000-8000-000000000002'
+  $$,
+  'firm lawyer can remove a case assignment'
+);
+
+select set_config('request.jwt.claim.sub', 'aaaaaaaa-0000-4000-8000-000000000002', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"aaaaaaaa-0000-4000-8000-000000000002","role":"authenticated"}',
+  true
+);
+
+select is(
+  (select count(*)::integer from public.cases),
+  0,
+  'removed paralegal can no longer read the assigned case'
 );
 
 select set_config('request.jwt.claim.sub', 'aaaaaaaa-0000-4000-8000-000000000003', true);

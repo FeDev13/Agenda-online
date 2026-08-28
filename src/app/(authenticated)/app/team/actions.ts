@@ -1,8 +1,18 @@
 "use server";
 
-import { assignCaseMemberSchema } from "@/features/team/validation";
+import {
+  assignCaseMemberSchema,
+  deactivateFirmMemberSchema,
+  removeCaseAssignmentSchema,
+  updateFirmMemberRoleSchema
+} from "@/features/team/validation";
 import { toUserMessage } from "@/lib/server/errors";
-import { assignCaseMember } from "@/lib/server/team";
+import {
+  assignCaseMember,
+  deactivateFirmMember,
+  removeCaseAssignment,
+  updateFirmMemberRole
+} from "@/lib/server/team";
 
 export type AssignCaseMemberFormState = {
   message: string | null;
@@ -32,4 +42,42 @@ export async function assignCaseMemberAction(
   } catch (error) {
     return { message: toUserMessage(error), ok: false };
   }
+}
+
+export async function removeCaseAssignmentAction(formData: FormData) {
+  const parsed = removeCaseAssignmentSchema.safeParse({
+    caseId: formData.get("caseId"),
+    profileId: formData.get("profileId")
+  });
+
+  if (!parsed.success) {
+    return;
+  }
+
+  await removeCaseAssignment(parsed.data);
+}
+
+export async function updateFirmMemberRoleAction(formData: FormData) {
+  const parsed = updateFirmMemberRoleSchema.safeParse({
+    profileId: formData.get("profileId"),
+    role: formData.get("role")
+  });
+
+  if (!parsed.success) {
+    return;
+  }
+
+  await updateFirmMemberRole(parsed.data);
+}
+
+export async function deactivateFirmMemberAction(formData: FormData) {
+  const parsed = deactivateFirmMemberSchema.safeParse({
+    profileId: formData.get("profileId")
+  });
+
+  if (!parsed.success) {
+    return;
+  }
+
+  await deactivateFirmMember(parsed.data);
 }

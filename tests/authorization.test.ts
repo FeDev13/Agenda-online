@@ -4,6 +4,7 @@ import {
   canAccessCase,
   canManageCaseAssignments,
   canManageCases,
+  canManageFirmMemberships,
   canManageCaseWork,
   canManageScheduling,
   isSameFirm,
@@ -51,5 +52,7 @@ describe("domain authorization", () => {
     expect(canManageCaseWork("paralegal")).toBe(true);
     expect(canManageCaseWork("read_only")).toBe(false);
     expect(canManageCaseAssignments("paralegal")).toBe(false);
+    expect(canManageFirmMemberships("lawyer")).toBe(false);
+    expect(canManageFirmMemberships("admin")).toBe(true);
   });
 });

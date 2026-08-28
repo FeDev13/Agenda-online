@@ -25,6 +25,36 @@ const taskStatusLabels: Record<TaskStatus, string> = {
   open: "Pendiente"
 };
 
+const assignmentRoleLabels: Record<string, string> = {
+  assigned: "Asignado/a",
+  assigned_paralegal: "Asistente asignado/a",
+  assigned_reader: "Lectura asignada",
+  responsible_admin: "Administración responsable",
+  responsible_lawyer: "Abogado/a responsable"
+};
+
+const auditActionLabels: Record<string, string> = {
+  "case.created": "Causa creada",
+  "case_member.assigned": "Acceso a causa asignado",
+  "case_member.removed": "Acceso a causa removido",
+  "deadline.created": "Vencimiento creado",
+  "document.download_prepared": "Descarga de documento preparada",
+  "document.uploaded": "Documento subido",
+  "event.created": "Evento creado",
+  "membership.disabled": "Integrante desactivado",
+  "membership.role_updated": "Rol de integrante actualizado",
+  "note.archived": "Nota archivada",
+  "task.status_updated": "Estado de tarea actualizado"
+};
+
+export function formatAssignmentRole(role: string) {
+  return assignmentRoleLabels[role] ?? role;
+}
+
+export function formatAuditAction(action: string) {
+  return auditActionLabels[action] ?? action;
+}
+
 export function formatFirmRole(role: FirmRole) {
   return firmRoleLabels[role];
 }

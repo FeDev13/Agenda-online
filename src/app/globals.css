@@ -254,6 +254,14 @@ button {
   justify-items: end;
 }
 
+.inlineForm {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .badge {
   border-radius: 999px;
   background: var(--panel-subtle);
@@ -326,6 +334,11 @@ button {
   background: transparent;
   border-color: #8fa2ae;
   color: inherit;
+}
+
+.dangerButton {
+  border-color: #c88a8c;
+  color: var(--danger);
 }
 
 .compactButton {

@@ -36,8 +36,18 @@ describe("initial Supabase migration security posture", () => {
     }
   });
 
-  it("does not grant authenticated or anonymous users hard-delete privileges", () => {
-    expect(migration).not.toMatch(/grant\s+[^;]*delete[^;]*\s+to authenticated/i);
+  it("limits hard-delete privileges to case assignment edges", () => {
+    const migrationWithoutAssignmentGrant = migration.replace(
+      "grant select, insert, update, delete on public.case_members to authenticated;",
+      ""
+    );
+
+    expect(migration).toContain(
+      "grant select, insert, update, delete on public.case_members to authenticated;"
+    );
+    expect(migrationWithoutAssignmentGrant).not.toMatch(
+      /grant\s+[^;]*delete[^;]*\s+to authenticated/i
+    );
     expect(migration).not.toMatch(/grant\s+[^;]*delete[^;]*\s+to anon/i);
   });
 

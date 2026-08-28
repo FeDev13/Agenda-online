@@ -563,7 +563,10 @@ create policy "users can read own profile and firm colleagues" on public.profile
       where self.profile_id = auth.uid()
         and self.status = 'active'
         and colleague.profile_id = profiles.id
-        and colleague.status = 'active'
+        and (
+          colleague.status = 'active'
+          or self.role = 'admin'
+        )
     )
   );
 
@@ -773,7 +776,7 @@ grant update (display_name) on public.profiles to authenticated;
 grant select, insert, update on public.firm_memberships to authenticated;
 grant select, insert, update on public.clients to authenticated;
 grant select, insert, update on public.cases to authenticated;
-grant select, insert, update on public.case_members to authenticated;
+grant select, insert, update, delete on public.case_members to authenticated;
 grant select, insert, update on public.events to authenticated;
 grant select, insert, update on public.case_deadlines to authenticated;
 grant select, insert, update on public.tasks to authenticated;
