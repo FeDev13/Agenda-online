@@ -65,8 +65,8 @@ function isSupportedTimeZone(value: string) {
 
 export const dateOnlySchema = z
   .string()
-  .regex(dateOnlyPattern, "Use YYYY-MM-DD.")
-  .refine(isRealDateOnly, "Use a real calendar date.");
+  .regex(dateOnlyPattern, "Usá el formato AAAA-MM-DD.")
+  .refine(isRealDateOnly, "Usá una fecha real del calendario.");
 
 const optionalTrimmedString = z
   .string()
@@ -89,8 +89,8 @@ const optionalUuidSchema = z
 const localDateTimeSchema = z
   .string()
   .trim()
-  .regex(localDateTimePattern, "Use a local date and time.")
-  .refine(isRealLocalDateTime, "Use a real local date and time.");
+  .regex(localDateTimePattern, "Usá una fecha y hora local.")
+  .refine(isRealLocalDateTime, "Usá una fecha y hora local real.");
 
 const optionalLocalDateTimeSchema = z
   .union([z.string(), z.null()])
@@ -107,57 +107,57 @@ const optionalLocalDateTimeSchema = z
 const timezoneSchema = z
   .string()
   .trim()
-  .min(1, "Timezone is required.")
+  .min(1, "La zona horaria es obligatoria.")
   .max(80)
-  .refine(isSupportedTimeZone, "Use a supported IANA timezone.");
+  .refine(isSupportedTimeZone, "Usá una zona horaria IANA válida.");
 
 export const createCaseSchema = z.object({
-  caseNumber: z.string().trim().min(1, "Case number is required.").max(80),
-  clientName: z.string().trim().min(1, "Client name is required.").max(180),
+  caseNumber: z.string().trim().min(1, "El número de causa es obligatorio.").max(80),
+  clientName: z.string().trim().min(1, "El nombre del cliente es obligatorio.").max(180),
   court: optionalTrimmedString,
   description: optionalTrimmedString,
   docketNumber: optionalTrimmedString,
   jurisdiction: optionalTrimmedString,
   openedOn: dateOnlySchema,
-  title: z.string().trim().min(1, "Case title is required.").max(200)
+  title: z.string().trim().min(1, "El título de la causa es obligatorio.").max(200)
 });
 
 export const createEventSchema = z
   .object({
-    caseId: z.string().uuid("Select a case."),
+    caseId: z.string().uuid("Seleccioná una causa."),
     description: optionalTrimmedString,
     endsAtLocal: optionalLocalDateTimeSchema,
     location: optionalTrimmedString,
     startsAtLocal: localDateTimeSchema,
     timezone: timezoneSchema.default("America/Argentina/Buenos_Aires"),
-    title: z.string().trim().min(1, "Event title is required.").max(200)
+    title: z.string().trim().min(1, "El título del evento es obligatorio.").max(200)
   })
   .refine(
     (value) =>
       !value.endsAtLocal ||
       new Date(value.endsAtLocal).getTime() >= new Date(value.startsAtLocal).getTime(),
     {
-      message: "End time must be after the start time.",
+      message: "La hora de finalización debe ser posterior al inicio.",
       path: ["endsAtLocal"]
     }
   );
 
 export const createDeadlineSchema = z.object({
   calculationNotes: optionalTrimmedString,
-  caseId: z.string().uuid("Select a case."),
+  caseId: z.string().uuid("Seleccioná una causa."),
   dueOn: dateOnlySchema,
   ruleSource: optionalTrimmedString,
-  title: z.string().trim().min(1, "Deadline title is required.").max(200)
+  title: z.string().trim().min(1, "El título del vencimiento es obligatorio.").max(200)
 });
 
 export const createNoteSchema = z.object({
-  body: z.string().trim().min(1, "Note body is required.").max(4000),
-  caseId: z.string().uuid("Select a case.")
+  body: z.string().trim().min(1, "El texto de la nota es obligatorio.").max(4000),
+  caseId: z.string().uuid("Seleccioná una causa.")
 });
 
 export const createTaskSchema = z.object({
   assignedTo: optionalUuidSchema,
-  caseId: z.string().uuid("Select a case."),
+  caseId: z.string().uuid("Seleccioná una causa."),
   dueOn: z
     .union([z.string(), z.null()])
     .transform((value) => {
@@ -169,12 +169,12 @@ export const createTaskSchema = z.object({
       return trimmedValue.length === 0 ? null : trimmedValue;
     })
     .pipe(dateOnlySchema.nullable()),
-  title: z.string().trim().min(1, "Task title is required.").max(220)
+  title: z.string().trim().min(1, "El título de la tarea es obligatorio.").max(220)
 });
 
 export const createDocumentMetadataSchema = z.object({
-  caseId: z.string().uuid("Select a case."),
-  displayName: z.string().trim().min(1, "Document name is required.").max(220),
+  caseId: z.string().uuid("Seleccioná una causa."),
+  displayName: z.string().trim().min(1, "El nombre del documento es obligatorio.").max(220),
   mimeType: optionalTrimmedString,
   sizeBytes: z
     .string()
@@ -182,32 +182,32 @@ export const createDocumentMetadataSchema = z.object({
     .transform((value) => (value.length === 0 ? null : Number(value)))
     .pipe(
       z
-        .number({ error: "Size must be a number." })
-        .int("Size must be a whole number.")
-        .min(0, "Size cannot be negative.")
-        .max(52_428_800, "Size cannot exceed 50 MiB.")
+        .number({ error: "El tamaño debe ser un número." })
+        .int("El tamaño debe ser un número entero.")
+        .min(0, "El tamaño no puede ser negativo.")
+        .max(52_428_800, "El tamaño no puede superar 50 MiB.")
         .nullable()
     )
 });
 
 export const createDocumentUploadSchema = z.object({
-  caseId: z.string().uuid("Select a case."),
+  caseId: z.string().uuid("Seleccioná una causa."),
   displayName: z
     .string()
     .trim()
     .transform((value) => (value.length === 0 ? null : value))
-    .pipe(z.string().max(220, "Document name is too long.").nullable())
+    .pipe(z.string().max(220, "El nombre del documento es demasiado largo.").nullable())
 });
 
 export const archiveNoteSchema = z.object({
-  caseId: z.string().uuid("Select a case."),
-  noteId: z.string().uuid("Select a note.")
+  caseId: z.string().uuid("Seleccioná una causa."),
+  noteId: z.string().uuid("Seleccioná una nota.")
 });
 
 export const updateTaskStatusSchema = z.object({
-  caseId: z.string().uuid("Select a case."),
+  caseId: z.string().uuid("Seleccioná una causa."),
   status: z.enum(["open", "completed", "archived"]),
-  taskId: z.string().uuid("Select a task.")
+  taskId: z.string().uuid("Seleccioná una tarea.")
 });
 
 export type CreateCaseInput = z.infer<typeof createCaseSchema>;

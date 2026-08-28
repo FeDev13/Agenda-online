@@ -1,5 +1,5 @@
--- Synthetic local-development data only.
--- Never replace these rows with real client, case, document, credential, or export data.
+-- Datos sinteticos solo para desarrollo local.
+-- Nunca reemplazar estas filas con datos reales de clientes, causas, documentos, credenciales o exportaciones.
 
 insert into auth.users (
   id,
@@ -42,7 +42,7 @@ values
     '',
     '',
     '{"provider":"email","providers":["email"]}'::jsonb,
-    '{"display_name":"Alicia Admin"}'::jsonb,
+    '{"display_name":"Alicia Administracion"}'::jsonb,
     now(),
     now()
   ),
@@ -64,7 +64,7 @@ values
     '',
     '',
     '{"provider":"email","providers":["email"]}'::jsonb,
-    '{"display_name":"Lorenzo Lawyer"}'::jsonb,
+    '{"display_name":"Lorenzo Abogado"}'::jsonb,
     now(),
     now()
   ),
@@ -86,7 +86,7 @@ values
     '',
     '',
     '{"provider":"email","providers":["email"]}'::jsonb,
-    '{"display_name":"Paula Paralegal"}'::jsonb,
+    '{"display_name":"Paula Asistente Legal"}'::jsonb,
     now(),
     now()
   ),
@@ -108,7 +108,7 @@ values
     '',
     '',
     '{"provider":"email","providers":["email"]}'::jsonb,
-    '{"display_name":"Rita Read Only"}'::jsonb,
+    '{"display_name":"Rita Solo Lectura"}'::jsonb,
     now(),
     now()
   ),
@@ -130,7 +130,7 @@ values
     '',
     '',
     '{"provider":"email","providers":["email"]}'::jsonb,
-    '{"display_name":"Oscar Other Firm"}'::jsonb,
+    '{"display_name":"Oscar Otro Estudio"}'::jsonb,
     now(),
     now()
   )
@@ -184,8 +184,8 @@ set
 
 insert into public.firms (id, name)
 values
-  ('10000000-0000-4000-8000-000000000001', 'Synthetic Legal Studio'),
-  ('10000000-0000-4000-8000-000000000002', 'Synthetic Outside Firm')
+  ('10000000-0000-4000-8000-000000000001', 'Estudio Legal Sintetico'),
+  ('10000000-0000-4000-8000-000000000002', 'Estudio Externo Sintetico')
 on conflict (id) do update
 set
   name = excluded.name,
@@ -246,19 +246,19 @@ values
   (
     '10000000-0000-4000-8000-000000000101',
     '10000000-0000-4000-8000-000000000001',
-    'Synthetic Client One',
+    'Cliente Sintetico Uno',
     '10000000-0000-4000-8000-000000000010'
   ),
   (
     '10000000-0000-4000-8000-000000000102',
     '10000000-0000-4000-8000-000000000001',
-    'Synthetic Client Two',
+    'Cliente Sintetico Dos',
     '10000000-0000-4000-8000-000000000011'
   ),
   (
     '10000000-0000-4000-8000-000000000201',
     '10000000-0000-4000-8000-000000000002',
-    'Synthetic Outside Client',
+    'Cliente Externo Sintetico',
     '10000000-0000-4000-8000-000000000020'
   )
 on conflict (id) do update
@@ -285,12 +285,12 @@ values
     '10000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000101',
     'SYN-2026-001',
-    'Synthetic Contract Review',
+    'Revision contractual sintetica',
     'Ciudad Autonoma de Buenos Aires',
-    'Civil Court 12',
+    'Juzgado Civil 12',
     'EXP-SYN-001',
     '2026-08-01',
-    'Synthetic case for local MVP validation.',
+    'Causa sintetica para validacion local del MVP.',
     '10000000-0000-4000-8000-000000000010'
   ),
   (
@@ -298,12 +298,12 @@ values
     '10000000-0000-4000-8000-000000000001',
     '10000000-0000-4000-8000-000000000102',
     'SYN-2026-002',
-    'Synthetic Labor Hearing',
+    'Audiencia laboral sintetica',
     'Provincia de Buenos Aires',
-    'Labor Court 4',
+    'Juzgado Laboral 4',
     'EXP-SYN-002',
     '2026-08-15',
-    'Synthetic case for assignment and scheduling checks.',
+    'Causa sintetica para controles de asignacion y agenda.',
     '10000000-0000-4000-8000-000000000011'
   ),
   (
@@ -311,12 +311,12 @@ values
     '10000000-0000-4000-8000-000000000002',
     '10000000-0000-4000-8000-000000000201',
     'OUT-2026-001',
-    'Synthetic Other Firm Matter',
+    'Asunto sintetico de otro estudio',
     'Ciudad Autonoma de Buenos Aires',
-    'Commercial Court 3',
+    'Juzgado Comercial 3',
     'EXP-OUT-001',
     '2026-08-10',
-    'Synthetic cross-firm isolation check.',
+    'Control sintetico de aislamiento entre estudios.',
     '10000000-0000-4000-8000-000000000020'
   )
 on conflict (id) do update
@@ -378,11 +378,11 @@ values (
   '10000000-0000-4000-8000-000000000301',
   '10000000-0000-4000-8000-000000000001',
   '10000000-0000-4000-8000-000000000111',
-  'Synthetic client meeting',
+  'Reunion sintetica con cliente',
   '2026-09-15 10:00:00 America/Argentina/Buenos_Aires'::timestamptz,
   '2026-09-15 11:00:00 America/Argentina/Buenos_Aires'::timestamptz,
   'America/Argentina/Buenos_Aires',
-  'Conference room',
+  'Sala de reuniones',
   '10000000-0000-4000-8000-000000000010'
 )
 on conflict (id) do update
@@ -410,10 +410,10 @@ values (
   '10000000-0000-4000-8000-000000000401',
   '10000000-0000-4000-8000-000000000001',
   '10000000-0000-4000-8000-000000000112',
-  'Synthetic filing deadline',
+  'Vencimiento sintetico de presentacion',
   '2026-09-20',
-  'Manual court order review',
-  'Synthetic manually entered deadline; no automated legal calculation.',
+  'Revision manual de orden judicial',
+  'Vencimiento sintetico cargado manualmente; sin calculo legal automatizado.',
   '10000000-0000-4000-8000-000000000011',
   now(),
   '10000000-0000-4000-8000-000000000011'
@@ -431,7 +431,7 @@ values (
   '10000000-0000-4000-8000-000000000501',
   '10000000-0000-4000-8000-000000000001',
   '10000000-0000-4000-8000-000000000111',
-  'Synthetic note for local case-detail review.',
+  'Nota sintetica para revision local del detalle de causa.',
   '10000000-0000-4000-8000-000000000010'
 )
 on conflict (id) do update
@@ -452,7 +452,7 @@ values (
   '10000000-0000-4000-8000-000000000601',
   '10000000-0000-4000-8000-000000000001',
   '10000000-0000-4000-8000-000000000111',
-  'Synthetic prepare hearing packet',
+  'Preparar legajo sintetico para audiencia',
   '2026-09-10',
   '10000000-0000-4000-8000-000000000012',
   '10000000-0000-4000-8000-000000000010'
@@ -479,7 +479,7 @@ values (
   '10000000-0000-4000-8000-000000000001',
   '10000000-0000-4000-8000-000000000111',
   '10000000-0000-4000-8000-000000000001/10000000-0000-4000-8000-000000000111/synthetic-contract.pdf',
-  'Synthetic contract.pdf',
+  'contrato-sintetico.pdf',
   'application/pdf',
   102400,
   '10000000-0000-4000-8000-000000000010'

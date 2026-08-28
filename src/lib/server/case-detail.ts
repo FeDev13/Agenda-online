@@ -17,7 +17,7 @@ import { canManageCaseWork } from "@/lib/domain/authorization";
 import { requireActiveMembership } from "@/lib/server/auth";
 import { UserFacingError } from "@/lib/server/errors";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import type { CaseStatus } from "@/types/database";
+import type { CaseStatus, TaskStatus } from "@/types/database";
 
 export type CaseDetail = {
   caseNumber: string;
@@ -43,7 +43,7 @@ export type CaseTaskSummary = {
   assignedToName: string | null;
   dueOn: string | null;
   id: string;
-  status: string;
+  status: TaskStatus;
   title: string;
 };
 
@@ -91,7 +91,7 @@ type TaskRow = {
   assigned_to: string | null;
   due_on: string | null;
   id: string;
-  status: string;
+  status: TaskStatus;
   title: string;
 };
 
@@ -137,7 +137,7 @@ export async function getCaseDetail(caseId: string): Promise<CaseDetail> {
     .maybeSingle();
 
   if (error) {
-    throw new UserFacingError("The case could not be loaded.");
+    throw new UserFacingError("No se pudo cargar la causa.");
   }
 
   if (!caseItem) {
@@ -153,12 +153,12 @@ export async function getCaseDetail(caseId: string): Promise<CaseDetail> {
     .maybeSingle();
 
   if (clientError) {
-    throw new UserFacingError("The case could not be loaded.");
+    throw new UserFacingError("No se pudo cargar la causa.");
   }
 
   return {
     caseNumber: row.case_number,
-    clientName: (client as ClientRow | null)?.display_name ?? "Restricted client",
+    clientName: (client as ClientRow | null)?.display_name ?? "Cliente restringido",
     court: row.court,
     description: row.description,
     docketNumber: row.docket_number,
@@ -184,7 +184,7 @@ export async function listCaseNotes(caseId: string): Promise<CaseNoteSummary[]> 
     .limit(20);
 
   if (error) {
-    throw new UserFacingError("Notes could not be loaded.");
+    throw new UserFacingError("No se pudieron cargar las notas.");
   }
 
   const rows = (data ?? []) as NoteRow[];
@@ -193,7 +193,7 @@ export async function listCaseNotes(caseId: string): Promise<CaseNoteSummary[]> 
   return rows.map((row) => ({
     body: row.body,
     createdAt: row.created_at,
-    createdByName: profilesById.get(row.created_by)?.display_name ?? "Team member",
+    createdByName: profilesById.get(row.created_by)?.display_name ?? "Integrante del equipo",
     id: row.id
   }));
 }
@@ -211,7 +211,7 @@ export async function listCaseTasks(caseId: string): Promise<CaseTaskSummary[]> 
     .order("created_at", { ascending: false });
 
   if (error) {
-    throw new UserFacingError("Tasks could not be loaded.");
+    throw new UserFacingError("No se pudieron cargar las tareas.");
   }
 
   const rows = (data ?? []) as TaskRow[];
@@ -221,7 +221,7 @@ export async function listCaseTasks(caseId: string): Promise<CaseTaskSummary[]> 
 
   return rows.map((row) => ({
     assignedToName: row.assigned_to
-      ? (profilesById.get(row.assigned_to)?.display_name ?? "Team member")
+      ? (profilesById.get(row.assigned_to)?.display_name ?? "Integrante del equipo")
       : null,
     dueOn: row.due_on,
     id: row.id,
@@ -243,7 +243,7 @@ export async function listCaseDocuments(caseId: string): Promise<CaseDocumentSum
     .order("created_at", { ascending: false });
 
   if (error) {
-    throw new UserFacingError("Document metadata could not be loaded.");
+    throw new UserFacingError("No se pudieron cargar los documentos.");
   }
 
   return ((data ?? []) as DocumentRow[]).map((row) => ({
@@ -269,7 +269,7 @@ export async function listAssignableCaseMembers(
     .eq("case_id", caseId);
 
   if (error) {
-    throw new UserFacingError("Case members could not be loaded.");
+    throw new UserFacingError("No se pudieron cargar los integrantes de la causa.");
   }
 
   const profileIds = ((data ?? []) as CaseMemberRow[]).map((row) => row.profile_id);
@@ -285,7 +285,7 @@ export async function listAssignableCaseMembers(
 
     return {
       displayName: profile?.display_name ?? null,
-      email: profile?.email ?? "Unknown email",
+      email: profile?.email ?? "Correo no disponible",
       profileId
     };
   });
@@ -295,7 +295,7 @@ export async function createCaseNote(input: CreateNoteInput) {
   const { membership, user } = await requireActiveMembership();
 
   if (!canManageCaseWork(membership.role)) {
-    throw new UserFacingError("Your role cannot add case work.");
+    throw new UserFacingError("Tu rol no permite agregar trabajo a la causa.");
   }
 
   const supabase = await createSupabaseServerClient();
@@ -307,7 +307,7 @@ export async function createCaseNote(input: CreateNoteInput) {
   });
 
   if (error) {
-    throw new UserFacingError("The note could not be saved.");
+    throw new UserFacingError("No se pudo guardar la nota.");
   }
 
   revalidateCase(input.caseId);
@@ -317,7 +317,7 @@ export async function archiveCaseNote(input: ArchiveNoteInput) {
   const { membership, user } = await requireActiveMembership();
 
   if (!canManageCaseWork(membership.role)) {
-    throw new UserFacingError("Your role cannot update case work.");
+    throw new UserFacingError("Tu rol no permite actualizar el trabajo de la causa.");
   }
 
   const supabase = await createSupabaseServerClient();
@@ -335,7 +335,7 @@ export async function archiveCaseNote(input: ArchiveNoteInput) {
     .maybeSingle();
 
   if (error || !data) {
-    throw new UserFacingError("The note could not be archived.");
+    throw new UserFacingError("No se pudo archivar la nota.");
   }
 
   await appendAuditLog(
@@ -352,7 +352,7 @@ export async function createCaseTask(input: CreateTaskInput) {
   const { membership, user } = await requireActiveMembership();
 
   if (!canManageCaseWork(membership.role)) {
-    throw new UserFacingError("Your role cannot add case work.");
+    throw new UserFacingError("Tu rol no permite agregar trabajo a la causa.");
   }
 
   const supabase = await createSupabaseServerClient();
@@ -367,7 +367,7 @@ export async function createCaseTask(input: CreateTaskInput) {
       .maybeSingle();
 
     if (assignedMemberError || !assignedMember) {
-      throw new UserFacingError("Tasks can only be assigned to case members.");
+      throw new UserFacingError("Las tareas solo pueden asignarse a integrantes de la causa.");
     }
   }
 
@@ -381,7 +381,7 @@ export async function createCaseTask(input: CreateTaskInput) {
   });
 
   if (error) {
-    throw new UserFacingError("The task could not be saved.");
+    throw new UserFacingError("No se pudo guardar la tarea.");
   }
 
   revalidateCase(input.caseId);
@@ -391,7 +391,7 @@ export async function updateCaseTaskStatus(input: UpdateTaskStatusInput) {
   const { membership, user } = await requireActiveMembership();
 
   if (!canManageCaseWork(membership.role)) {
-    throw new UserFacingError("Your role cannot update case work.");
+    throw new UserFacingError("Tu rol no permite actualizar el trabajo de la causa.");
   }
 
   const supabase = await createSupabaseServerClient();
@@ -405,7 +405,7 @@ export async function updateCaseTaskStatus(input: UpdateTaskStatusInput) {
     .maybeSingle();
 
   if (error || !data) {
-    throw new UserFacingError("The task could not be updated.");
+    throw new UserFacingError("No se pudo actualizar la tarea.");
   }
 
   await appendAuditLog(
@@ -422,7 +422,7 @@ export async function createDocumentMetadata(input: CreateDocumentMetadataInput)
   const { membership, user } = await requireActiveMembership();
 
   if (!canManageCaseWork(membership.role)) {
-    throw new UserFacingError("Your role cannot add case work.");
+    throw new UserFacingError("Tu rol no permite agregar trabajo a la causa.");
   }
 
   const storagePath = buildStoragePath(
@@ -443,7 +443,7 @@ export async function createDocumentMetadata(input: CreateDocumentMetadataInput)
   });
 
   if (error) {
-    throw new UserFacingError("The document metadata could not be saved.");
+    throw new UserFacingError("No se pudieron guardar los datos del documento.");
   }
 
   revalidateCase(input.caseId);
@@ -453,19 +453,19 @@ export async function uploadCaseDocument(input: CreateDocumentUploadInput, file:
   const { membership, user } = await requireActiveMembership();
 
   if (!canManageCaseWork(membership.role)) {
-    throw new UserFacingError("Your role cannot add case work.");
+    throw new UserFacingError("Tu rol no permite agregar trabajo a la causa.");
   }
 
   if (!file.name || file.size === 0) {
-    throw new UserFacingError("Choose a document to upload.");
+    throw new UserFacingError("Seleccioná un documento para subir.");
   }
 
   if (file.size > maxDocumentBytes) {
-    throw new UserFacingError("Document uploads cannot exceed 50 MiB.");
+    throw new UserFacingError("Los documentos no pueden superar 50 MiB.");
   }
 
   if (!allowedDocumentMimeTypes.has(file.type)) {
-    throw new UserFacingError("Document type is not allowed.");
+    throw new UserFacingError("El tipo de documento no está permitido.");
   }
 
   await requireWritableCase(input.caseId);
@@ -490,7 +490,7 @@ export async function uploadCaseDocument(input: CreateDocumentUploadInput, file:
     .single();
 
   if (metadataError || !documentRow) {
-    throw new UserFacingError("The document metadata could not be saved.");
+    throw new UserFacingError("No se pudieron guardar los datos del documento.");
   }
 
   const { error: uploadError } = await supabase.storage
@@ -505,7 +505,7 @@ export async function uploadCaseDocument(input: CreateDocumentUploadInput, file:
       .from("documents")
       .update({ archived_at: new Date().toISOString() })
       .eq("id", documentRow.id);
-    throw new UserFacingError("The document could not be uploaded.");
+    throw new UserFacingError("No se pudo subir el documento.");
   }
 
   await appendAuditLog(
@@ -535,7 +535,7 @@ export async function createSignedDocumentDownloadUrl(
     .maybeSingle();
 
   if (error || !data) {
-    throw new UserFacingError("The document could not be loaded.");
+    throw new UserFacingError("No se pudo cargar el documento.");
   }
 
   const document = data as Pick<
@@ -549,7 +549,7 @@ export async function createSignedDocumentDownloadUrl(
     });
 
   if (signedUrlError || !signedUrl?.signedUrl) {
-    throw new UserFacingError("The document download could not be prepared.");
+    throw new UserFacingError("No se pudo preparar la descarga del documento.");
   }
 
   return signedUrl.signedUrl;
@@ -569,7 +569,7 @@ async function getProfilesById(profileIds: string[]) {
     .in("id", uniqueProfileIds);
 
   if (error) {
-    throw new UserFacingError("Team member details could not be loaded.");
+    throw new UserFacingError("No se pudieron cargar los datos del equipo.");
   }
 
   return new Map(((data ?? []) as ProfileRow[]).map((profile) => [profile.id, profile]));
@@ -587,7 +587,7 @@ async function requireWritableCase(caseId: string) {
     .maybeSingle();
 
   if (error || !data) {
-    throw new UserFacingError("Select an open case.");
+    throw new UserFacingError("Seleccioná una causa abierta.");
   }
 }
 

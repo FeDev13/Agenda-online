@@ -1,4 +1,5 @@
 import { canManageCaseAssignments } from "@/lib/domain/authorization";
+import { formatFirmRole } from "@/lib/display-labels";
 import { getCurrentUser } from "@/lib/server/auth";
 import { listOpenCases } from "@/lib/server/cases";
 import { listCaseAssignments, listFirmMembers } from "@/lib/server/team";
@@ -23,22 +24,22 @@ export default async function TeamPage() {
     <>
       <div className="pageHeader">
         <div>
-          <h1>Team access</h1>
-          <p>Active firm members and case assignments for restricted matter access.</p>
+          <h1>Accesos</h1>
+          <p>Integrantes activos y asignaciones para acceso restringido a causas.</p>
         </div>
       </div>
 
       <div className="grid two">
         <section className="panel" aria-labelledby="team-members-title">
-          <h2 id="team-members-title">Active members</h2>
+          <h2 id="team-members-title">Integrantes activos</h2>
           {members.length ? (
             <div className="tableWrap">
               <table className="dataTable">
                 <thead>
                   <tr>
-                    <th scope="col">Member</th>
-                    <th scope="col">Role</th>
-                    <th scope="col">Assignments</th>
+                    <th scope="col">Integrante</th>
+                    <th scope="col">Rol</th>
+                    <th scope="col">Asignaciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -48,7 +49,7 @@ export default async function TeamPage() {
                         <strong>{member.displayName ?? member.email}</strong>
                         <span>{member.email}</span>
                       </td>
-                      <td>{member.role.replace("_", " ")}</td>
+                      <td>{formatFirmRole(member.role)}</td>
                       <td>{member.assignmentCount}</td>
                     </tr>
                   ))}
@@ -56,14 +57,16 @@ export default async function TeamPage() {
               </table>
             </div>
           ) : (
-            <p className="emptyState">No active firm members are visible.</p>
+            <p className="emptyState">No hay integrantes activos visibles.</p>
           )}
         </section>
 
         <section className="panel" aria-labelledby="assign-access-title">
-          <h2 id="assign-access-title">Assign case access</h2>
+          <h2 id="assign-access-title">Asignar acceso a causa</h2>
           {!canAssign ? (
-            <p className="errorText">Only admins and lawyers can assign case access.</p>
+            <p className="errorText">
+              Solo administración y abogados pueden asignar acceso a causas.
+            </p>
           ) : null}
           <AssignmentForm canAssign={canAssign} cases={cases} members={members} />
         </section>
@@ -74,15 +77,15 @@ export default async function TeamPage() {
         className="panel"
         style={{ marginTop: 18 }}
       >
-        <h2 id="case-assignments-title">Current assignments</h2>
+        <h2 id="case-assignments-title">Asignaciones actuales</h2>
         {assignments.length ? (
           <div className="tableWrap">
             <table className="dataTable">
               <thead>
                 <tr>
-                  <th scope="col">Case</th>
-                  <th scope="col">Member</th>
-                  <th scope="col">Assignment role</th>
+                  <th scope="col">Causa</th>
+                  <th scope="col">Integrante</th>
+                  <th scope="col">Rol de asignación</th>
                 </tr>
               </thead>
               <tbody>
@@ -103,7 +106,7 @@ export default async function TeamPage() {
             </table>
           </div>
         ) : (
-          <p className="emptyState">No explicit case assignments exist yet.</p>
+          <p className="emptyState">Todavía no hay asignaciones explícitas de causas.</p>
         )}
       </section>
     </>
@@ -113,8 +116,8 @@ export default async function TeamPage() {
 function NoActiveFirm() {
   return (
     <section className="panel" aria-labelledby="no-firm-title">
-      <h1 id="no-firm-title">No active firm access</h1>
-      <p className="muted">An active firm membership is required to manage access.</p>
+      <h1 id="no-firm-title">Sin acceso activo al estudio</h1>
+      <p className="muted">Se requiere una membresía activa para gestionar accesos.</p>
     </section>
   );
 }

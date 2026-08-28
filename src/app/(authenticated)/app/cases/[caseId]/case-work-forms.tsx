@@ -38,11 +38,11 @@ export function CaseWorkForms({
   return (
     <div className="grid">
       <section className="panel" aria-labelledby="new-note-title">
-        <h2 id="new-note-title">Add note</h2>
+        <h2 id="new-note-title">Agregar nota</h2>
         <form action={noteAction} className="formGrid">
           <input name="caseId" type="hidden" value={caseId} />
           <div className="field">
-            <label htmlFor="note-body">Note</label>
+            <label htmlFor="note-body">Nota</label>
             <textarea disabled={!canManage} id="note-body" name="body" required />
           </div>
           {noteState.message ? (
@@ -51,28 +51,28 @@ export function CaseWorkForms({
             </p>
           ) : null}
           <button className="button" disabled={!canManage || notePending} type="submit">
-            {notePending ? "Saving..." : "Save note"}
+            {notePending ? "Guardando..." : "Guardar nota"}
           </button>
         </form>
       </section>
 
       <section className="panel" aria-labelledby="new-task-title">
-        <h2 id="new-task-title">Add task</h2>
+        <h2 id="new-task-title">Agregar tarea</h2>
         <form action={taskAction} className="formGrid">
           <input name="caseId" type="hidden" value={caseId} />
           <div className="field">
-            <label htmlFor="task-title">Title</label>
+            <label htmlFor="task-title">Título</label>
             <input disabled={!canManage} id="task-title" name="title" required />
           </div>
           <div className="fieldRow">
             <div className="field">
-              <label htmlFor="task-due-on">Due date</label>
+              <label htmlFor="task-due-on">Vencimiento</label>
               <input disabled={!canManage} id="task-due-on" name="dueOn" type="date" />
             </div>
             <div className="field">
-              <label htmlFor="task-assigned-to">Assigned to</label>
+              <label htmlFor="task-assigned-to">Asignada a</label>
               <select disabled={!canManage} id="task-assigned-to" name="assignedTo">
-                <option value="">Unassigned</option>
+                <option value="">Sin asignar</option>
                 {members.map((member) => (
                   <option key={member.profileId} value={member.profileId}>
                     {member.displayName ?? member.email}
@@ -87,17 +87,17 @@ export function CaseWorkForms({
             </p>
           ) : null}
           <button className="button" disabled={!canManage || taskPending} type="submit">
-            {taskPending ? "Saving..." : "Save task"}
+            {taskPending ? "Guardando..." : "Guardar tarea"}
           </button>
         </form>
       </section>
 
       <section className="panel" aria-labelledby="new-document-title">
-        <h2 id="new-document-title">Upload document</h2>
+        <h2 id="new-document-title">Subir documento</h2>
         <form action={documentAction} className="formGrid">
           <input name="caseId" type="hidden" value={caseId} />
           <div className="field">
-            <label htmlFor="document-file">File</label>
+            <label htmlFor="document-file">Archivo</label>
             <input
               accept="application/pdf,image/png,image/jpeg,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               disabled={!canManage}
@@ -108,7 +108,7 @@ export function CaseWorkForms({
             />
           </div>
           <div className="field">
-            <label htmlFor="document-name">Display name</label>
+            <label htmlFor="document-name">Nombre visible</label>
             <input disabled={!canManage} id="document-name" name="displayName" />
           </div>
           {documentState.message ? (
@@ -121,7 +121,7 @@ export function CaseWorkForms({
             disabled={!canManage || documentPending}
             type="submit"
           >
-            {documentPending ? "Uploading..." : "Upload document"}
+            {documentPending ? "Subiendo..." : "Subir documento"}
           </button>
         </form>
       </section>

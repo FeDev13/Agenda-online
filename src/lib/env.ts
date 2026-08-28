@@ -13,7 +13,7 @@ export function getPublicEnv() {
 
   if (!parsed.success) {
     throw new Error(
-      "Supabase environment variables are missing. Copy .env.example to .env.local and set the public project URL and publishable key."
+      "Faltan las variables de entorno de Supabase. Copiá .env.example a .env.local y configurá la URL pública del proyecto y la clave publicable."
     );
   }
 

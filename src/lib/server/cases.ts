@@ -45,7 +45,7 @@ export async function listOpenCases(): Promise<OpenCaseSummary[]> {
     .order("opened_on", { ascending: false });
 
   if (error) {
-    throw new UserFacingError("Open cases could not be loaded.");
+    throw new UserFacingError("No se pudieron cargar las causas abiertas.");
   }
 
   const rows = (data ?? []) as OpenCaseRow[];
@@ -59,7 +59,7 @@ export async function listOpenCases(): Promise<OpenCaseSummary[]> {
     : { data: [], error: null };
 
   if (clientsError) {
-    throw new UserFacingError("Open cases could not be loaded.");
+    throw new UserFacingError("No se pudieron cargar las causas abiertas.");
   }
 
   const clientNames = new Map(
@@ -68,7 +68,7 @@ export async function listOpenCases(): Promise<OpenCaseSummary[]> {
 
   return rows.map((row) => ({
     caseNumber: row.case_number,
-    clientName: clientNames.get(row.client_id) ?? "Unassigned client",
+    clientName: clientNames.get(row.client_id) ?? "Cliente sin asignar",
     court: row.court,
     docketNumber: row.docket_number,
     id: row.id,
@@ -81,7 +81,7 @@ export async function createCase(input: CreateCaseInput) {
   const { membership } = await requireActiveMembership();
 
   if (!canManageCases(membership.role)) {
-    throw new UserFacingError("Only admins and lawyers can create cases.");
+    throw new UserFacingError("Solo administración y abogados pueden crear causas.");
   }
 
   const supabase = await createSupabaseServerClient();
@@ -98,7 +98,7 @@ export async function createCase(input: CreateCaseInput) {
   });
 
   if (error) {
-    throw new UserFacingError("The case could not be created.");
+    throw new UserFacingError("No se pudo crear la causa.");
   }
 
   revalidatePath("/app");

@@ -70,7 +70,7 @@ export async function listFirmMembers(): Promise<FirmMemberSummary[]> {
     ]);
 
   if (error || assignmentsError) {
-    throw new UserFacingError("Team members could not be loaded.");
+    throw new UserFacingError("No se pudieron cargar los integrantes del equipo.");
   }
 
   const rows = (memberships ?? []) as MembershipRow[];
@@ -81,7 +81,7 @@ export async function listFirmMembers(): Promise<FirmMemberSummary[]> {
     : { data: [], error: null };
 
   if (profilesError) {
-    throw new UserFacingError("Team members could not be loaded.");
+    throw new UserFacingError("No se pudieron cargar los integrantes del equipo.");
   }
 
   const profilesById = new Map(
@@ -102,7 +102,7 @@ export async function listFirmMembers(): Promise<FirmMemberSummary[]> {
     return {
       assignmentCount: assignmentCounts.get(row.profile_id) ?? 0,
       displayName: profile?.display_name ?? null,
-      email: profile?.email ?? "Unknown email",
+      email: profile?.email ?? "Correo no disponible",
       profileId: row.profile_id,
       role: row.role,
       status: row.status
@@ -121,7 +121,7 @@ export async function listCaseAssignments(): Promise<CaseAssignmentSummary[]> {
     .order("assigned_at", { ascending: false });
 
   if (error) {
-    throw new UserFacingError("Case assignments could not be loaded.");
+    throw new UserFacingError("No se pudieron cargar las asignaciones de causas.");
   }
 
   const rows = (assignments ?? []) as CaseMemberRow[];
@@ -143,7 +143,7 @@ export async function listCaseAssignments(): Promise<CaseAssignmentSummary[]> {
     ]);
 
   if (casesError || profilesError) {
-    throw new UserFacingError("Case assignments could not be loaded.");
+    throw new UserFacingError("No se pudieron cargar las asignaciones de causas.");
   }
 
   const casesById = new Map(
@@ -160,10 +160,10 @@ export async function listCaseAssignments(): Promise<CaseAssignmentSummary[]> {
     return {
       assignedAt: row.assigned_at,
       caseId: row.case_id,
-      caseNumber: caseItem?.case_number ?? "Case",
-      caseTitle: caseItem?.title ?? "Restricted case",
+      caseNumber: caseItem?.case_number ?? "Causa",
+      caseTitle: caseItem?.title ?? "Causa restringida",
       displayName: profile?.display_name ?? null,
-      email: profile?.email ?? "Unknown email",
+      email: profile?.email ?? "Correo no disponible",
       profileId: row.profile_id,
       role: row.role
     };
@@ -174,7 +174,9 @@ export async function assignCaseMember(input: AssignCaseMemberInput) {
   const { membership, user } = await requireActiveMembership();
 
   if (!canManageCaseAssignments(membership.role)) {
-    throw new UserFacingError("Only admins and lawyers can assign case access.");
+    throw new UserFacingError(
+      "Solo administración y abogados pueden asignar acceso a causas."
+    );
   }
 
   const supabase = await createSupabaseServerClient();
@@ -196,7 +198,7 @@ export async function assignCaseMember(input: AssignCaseMemberInput) {
   ]);
 
   if (!targetMembership || !targetCase) {
-    throw new UserFacingError("Select an active firm member and open case.");
+    throw new UserFacingError("Seleccioná un integrante activo y una causa abierta.");
   }
 
   const { error } = await supabase.from("case_members").upsert(
@@ -211,7 +213,7 @@ export async function assignCaseMember(input: AssignCaseMemberInput) {
   );
 
   if (error) {
-    throw new UserFacingError("Case access could not be assigned.");
+    throw new UserFacingError("No se pudo asignar el acceso a la causa.");
   }
 
   revalidatePath("/app/team");

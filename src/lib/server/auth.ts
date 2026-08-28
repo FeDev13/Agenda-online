@@ -53,7 +53,7 @@ export async function getCurrentUser(): Promise<AppUser | null> {
   return {
     id: user.id,
     displayName: profile?.display_name ?? null,
-    email: profile?.email ?? user.email ?? "Unknown user",
+    email: profile?.email ?? user.email ?? "Usuario no identificado",
     membership
   };
 }
@@ -72,7 +72,9 @@ export async function requireActiveMembership() {
   const user = await requireUser();
 
   if (!user.membership) {
-    throw new UserFacingError("Your account is not attached to an active firm invite.");
+    throw new UserFacingError(
+      "Tu cuenta no está vinculada a una invitación activa del estudio."
+    );
   }
 
   return { membership: user.membership, user };

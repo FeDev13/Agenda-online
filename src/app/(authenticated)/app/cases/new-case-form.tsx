@@ -13,11 +13,11 @@ export function NewCaseForm({ canCreate }: { canCreate: boolean }) {
     <form action={formAction} className="formGrid">
       <div className="fieldRow">
         <div className="field">
-          <label htmlFor="caseNumber">Case number</label>
+          <label htmlFor="caseNumber">Número de causa</label>
           <input disabled={!canCreate} id="caseNumber" name="caseNumber" required />
         </div>
         <div className="field">
-          <label htmlFor="openedOn">Opened on</label>
+          <label htmlFor="openedOn">Fecha de apertura</label>
           <input
             disabled={!canCreate}
             id="openedOn"
@@ -28,29 +28,29 @@ export function NewCaseForm({ canCreate }: { canCreate: boolean }) {
         </div>
       </div>
       <div className="field">
-        <label htmlFor="title">Case title</label>
+        <label htmlFor="title">Título de la causa</label>
         <input disabled={!canCreate} id="title" name="title" required />
       </div>
       <div className="field">
-        <label htmlFor="clientName">Client</label>
+        <label htmlFor="clientName">Cliente</label>
         <input disabled={!canCreate} id="clientName" name="clientName" required />
       </div>
       <div className="fieldRow">
         <div className="field">
-          <label htmlFor="court">Court</label>
+          <label htmlFor="court">Juzgado</label>
           <input disabled={!canCreate} id="court" name="court" />
         </div>
         <div className="field">
-          <label htmlFor="docketNumber">Docket number</label>
+          <label htmlFor="docketNumber">Expediente</label>
           <input disabled={!canCreate} id="docketNumber" name="docketNumber" />
         </div>
       </div>
       <div className="field">
-        <label htmlFor="jurisdiction">Jurisdiction</label>
+        <label htmlFor="jurisdiction">Jurisdicción</label>
         <input disabled={!canCreate} id="jurisdiction" name="jurisdiction" />
       </div>
       <div className="field">
-        <label htmlFor="description">Internal description</label>
+        <label htmlFor="description">Descripción interna</label>
         <textarea disabled={!canCreate} id="description" name="description" />
       </div>
       {state.message ? (
@@ -59,7 +59,7 @@ export function NewCaseForm({ canCreate }: { canCreate: boolean }) {
         </p>
       ) : null}
       <button className="button" disabled={!canCreate || pending} type="submit">
-        {pending ? "Creating..." : "Create case"}
+        {pending ? "Creando..." : "Crear causa"}
       </button>
     </form>
   );

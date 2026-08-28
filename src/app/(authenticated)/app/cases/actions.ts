@@ -23,14 +23,14 @@ export async function createCaseAction(_state: CaseFormState, formData: FormData
 
   if (!parsed.success) {
     return {
-      message: parsed.error.issues[0]?.message ?? "Check the case fields.",
+      message: parsed.error.issues[0]?.message ?? "Revisá los datos de la causa.",
       ok: false
     };
   }
 
   try {
     await createCase(parsed.data);
-    return { message: "Case created.", ok: true };
+    return { message: "Causa creada.", ok: true };
   } catch (error) {
     return { message: toUserMessage(error), ok: false };
   }

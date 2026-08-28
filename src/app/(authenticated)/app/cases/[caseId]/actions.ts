@@ -31,14 +31,14 @@ export async function createNoteAction(_state: CaseDetailFormState, formData: Fo
 
   if (!parsed.success) {
     return {
-      message: parsed.error.issues[0]?.message ?? "Check the note fields.",
+      message: parsed.error.issues[0]?.message ?? "Revisá los datos de la nota.",
       ok: false
     };
   }
 
   try {
     await createCaseNote(parsed.data);
-    return { message: "Note saved.", ok: true };
+    return { message: "Nota guardada.", ok: true };
   } catch (error) {
     return { message: toUserMessage(error), ok: false };
   }
@@ -54,14 +54,14 @@ export async function createTaskAction(_state: CaseDetailFormState, formData: Fo
 
   if (!parsed.success) {
     return {
-      message: parsed.error.issues[0]?.message ?? "Check the task fields.",
+      message: parsed.error.issues[0]?.message ?? "Revisá los datos de la tarea.",
       ok: false
     };
   }
 
   try {
     await createCaseTask(parsed.data);
-    return { message: "Task saved.", ok: true };
+    return { message: "Tarea guardada.", ok: true };
   } catch (error) {
     return { message: toUserMessage(error), ok: false };
   }
@@ -80,14 +80,14 @@ export async function createDocumentMetadataAction(
 
   if (!parsed.success) {
     return {
-      message: parsed.error.issues[0]?.message ?? "Check the document fields.",
+      message: parsed.error.issues[0]?.message ?? "Revisá los datos del documento.",
       ok: false
     };
   }
 
   try {
     await createDocumentMetadata(parsed.data);
-    return { message: "Document metadata saved.", ok: true };
+    return { message: "Datos del documento guardados.", ok: true };
   } catch (error) {
     return { message: toUserMessage(error), ok: false };
   }
@@ -105,18 +105,18 @@ export async function uploadDocumentAction(
 
   if (!parsed.success) {
     return {
-      message: parsed.error.issues[0]?.message ?? "Check the document fields.",
+      message: parsed.error.issues[0]?.message ?? "Revisá los datos del documento.",
       ok: false
     };
   }
 
   if (!(file instanceof File)) {
-    return { message: "Choose a document to upload.", ok: false };
+    return { message: "Seleccioná un documento para subir.", ok: false };
   }
 
   try {
     await uploadCaseDocument(parsed.data, file);
-    return { message: "Document uploaded.", ok: true };
+    return { message: "Documento subido.", ok: true };
   } catch (error) {
     return { message: toUserMessage(error), ok: false };
   }

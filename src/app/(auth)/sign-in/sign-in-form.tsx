@@ -13,11 +13,11 @@ export function SignInForm({ next }: { next: string }) {
     <form action={formAction} className="formGrid">
       <input name="next" type="hidden" value={next} />
       <div className="field">
-        <label htmlFor="email">Email</label>
+        <label htmlFor="email">Correo electronico</label>
         <input autoComplete="email" id="email" name="email" required type="email" />
       </div>
       <div className="field">
-        <label htmlFor="password">Password</label>
+        <label htmlFor="password">Contraseña</label>
         <input
           autoComplete="current-password"
           id="password"
@@ -32,7 +32,7 @@ export function SignInForm({ next }: { next: string }) {
         </p>
       ) : null}
       <button className="button" disabled={pending} type="submit">
-        {pending ? "Signing in..." : "Sign in"}
+        {pending ? "Ingresando..." : "Ingresar"}
       </button>
     </form>
   );

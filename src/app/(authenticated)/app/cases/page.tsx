@@ -20,13 +20,13 @@ export default async function CasesPage() {
     <>
       <div className="pageHeader">
         <div>
-          <h1>Open cases</h1>
-          <p>Visible active matters for the current firm and assignment rules.</p>
+          <h1>Causas abiertas</h1>
+          <p>Causas activas visibles según el estudio actual y las reglas de asignación.</p>
         </div>
       </div>
       <div className="grid two">
         <section className="panel" aria-labelledby="open-cases-title">
-          <h2 id="open-cases-title">Open case list</h2>
+          <h2 id="open-cases-title">Listado de causas abiertas</h2>
           {cases.length ? (
             <ul className="caseList">
               {cases.map((caseItem) => (
@@ -40,7 +40,7 @@ export default async function CasesPage() {
                         {caseItem.docketNumber ? ` · ${caseItem.docketNumber}` : ""}
                       </p>
                       <Link className="textLink" href={`/app/cases/${caseItem.id}`}>
-                        View case
+                        Ver causa
                       </Link>
                     </div>
                     <span className="badge">{caseItem.caseNumber}</span>
@@ -49,13 +49,13 @@ export default async function CasesPage() {
               ))}
             </ul>
           ) : (
-            <p className="emptyState">No open cases are visible to this account.</p>
+            <p className="emptyState">No hay causas abiertas visibles para esta cuenta.</p>
           )}
         </section>
         <section className="panel" aria-labelledby="create-case-title">
-          <h2 id="create-case-title">Create a case</h2>
+          <h2 id="create-case-title">Crear una causa</h2>
           {!canCreate ? (
-            <p className="errorText">Only admins and lawyers can create cases.</p>
+            <p className="errorText">Solo administración y abogados pueden crear causas.</p>
           ) : null}
           <NewCaseForm canCreate={canCreate} />
         </section>
@@ -67,8 +67,8 @@ export default async function CasesPage() {
 function NoActiveFirm() {
   return (
     <section className="panel" aria-labelledby="no-firm-title">
-      <h1 id="no-firm-title">No active firm access</h1>
-      <p className="muted">An active firm membership is required to view cases.</p>
+      <h1 id="no-firm-title">Sin acceso activo al estudio</h1>
+      <p className="muted">Se requiere una membresía activa para ver causas.</p>
     </section>
   );
 }

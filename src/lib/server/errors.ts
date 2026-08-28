@@ -12,5 +12,5 @@ export function toUserMessage(error: unknown) {
     return error.message;
   }
 
-  return "The request could not be completed. Please check the information and try again.";
+  return "No se pudo completar la solicitud. Revisá la información e intentá nuevamente.";
 }

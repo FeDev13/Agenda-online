@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { formatFirmRole } from "@/lib/display-labels";
 import { requireUser } from "@/lib/server/auth";
 
 import { signOutAction } from "./actions";
@@ -15,21 +16,21 @@ export default async function AuthenticatedLayout({
       <aside className="sidebar">
         <div className="brandBlock">
           <strong>Agenda Legal</strong>
-          <span>Case scheduling</span>
+          <span>Gestión de causas</span>
         </div>
-        <nav aria-label="Primary navigation" className="navList">
-          <Link href="/app">Dashboard</Link>
-          <Link href="/app/cases">Open cases</Link>
-          <Link href="/app/calendar">Calendar</Link>
-          <Link href="/app/team">Team access</Link>
+        <nav aria-label="Navegación principal" className="navList">
+          <Link href="/app">Inicio</Link>
+          <Link href="/app/cases">Causas abiertas</Link>
+          <Link href="/app/calendar">Agenda</Link>
+          <Link href="/app/team">Accesos</Link>
         </nav>
       </aside>
       <div className="mainArea">
         <header className="topbar">
           {user.membership ? (
-            <span className="badge">{user.membership.role.replace("_", " ")}</span>
+            <span className="badge">{formatFirmRole(user.membership.role)}</span>
           ) : (
-            <span className="badge">No active firm</span>
+            <span className="badge">Sin estudio activo</span>
           )}
           <div className="userBlock">
             <strong>{label}</strong>
@@ -37,7 +38,7 @@ export default async function AuthenticatedLayout({
           </div>
           <form action={signOutAction}>
             <button className="secondaryButton" type="submit">
-              Sign out
+              Salir
             </button>
           </form>
         </header>

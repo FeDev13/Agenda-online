@@ -44,7 +44,7 @@ const defaultDisplayTimeZone =
   process.env.DEFAULT_FIRM_TIMEZONE ?? "America/Argentina/Buenos_Aires";
 
 function getDateOnlyInTimeZone(date: Date, timeZone: string) {
-  const parts = new Intl.DateTimeFormat("en", {
+  const parts = new Intl.DateTimeFormat("es-AR", {
     day: "2-digit",
     month: "2-digit",
     timeZone,
@@ -79,7 +79,7 @@ export async function listUpcomingSchedule(): Promise<ScheduleItem[]> {
   ]);
 
   if (eventsResult.error || deadlinesResult.error) {
-    throw new UserFacingError("The schedule could not be loaded.");
+    throw new UserFacingError("No se pudo cargar la agenda.");
   }
 
   const eventRows = (eventsResult.data ?? []) as EventRow[];
@@ -100,7 +100,7 @@ export async function listUpcomingSchedule(): Promise<ScheduleItem[]> {
     : { data: [], error: null };
 
   if (casesError) {
-    throw new UserFacingError("The schedule could not be loaded.");
+    throw new UserFacingError("No se pudo cargar la agenda.");
   }
 
   const caseTitles = new Map(
@@ -110,8 +110,8 @@ export async function listUpcomingSchedule(): Promise<ScheduleItem[]> {
   const events = eventRows.map((row) => ({
     item: {
       caseId: row.case_id,
-      caseTitle: caseTitles.get(row.case_id) ?? "Case",
-      dateLabel: new Intl.DateTimeFormat("en", {
+      caseTitle: caseTitles.get(row.case_id) ?? "Causa",
+      dateLabel: new Intl.DateTimeFormat("es-AR", {
         dateStyle: "medium",
         timeStyle: "short",
         timeZone: row.timezone
@@ -127,7 +127,7 @@ export async function listUpcomingSchedule(): Promise<ScheduleItem[]> {
   const deadlines = deadlineRows.map((row) => ({
     item: {
       caseId: row.case_id,
-      caseTitle: caseTitles.get(row.case_id) ?? "Case",
+      caseTitle: caseTitles.get(row.case_id) ?? "Causa",
       dateLabel: row.due_on,
       id: row.id,
       kind: "deadline" as const,
@@ -146,7 +146,7 @@ export async function createEvent(input: CreateEventInput) {
   const { membership } = await requireActiveMembership();
 
   if (!canManageScheduling(membership.role)) {
-    throw new UserFacingError("Your role cannot create scheduling entries.");
+    throw new UserFacingError("Tu rol no permite crear entradas de agenda.");
   }
 
   const supabase = await createSupabaseServerClient();
@@ -161,7 +161,7 @@ export async function createEvent(input: CreateEventInput) {
   });
 
   if (error) {
-    throw new UserFacingError("The event could not be created.");
+    throw new UserFacingError("No se pudo crear el evento.");
   }
 
   revalidatePath("/app");
@@ -172,7 +172,7 @@ export async function createDeadline(input: CreateDeadlineInput) {
   const { membership } = await requireActiveMembership();
 
   if (!canManageScheduling(membership.role)) {
-    throw new UserFacingError("Your role cannot create scheduling entries.");
+    throw new UserFacingError("Tu rol no permite crear entradas de agenda.");
   }
 
   const supabase = await createSupabaseServerClient();
@@ -185,7 +185,7 @@ export async function createDeadline(input: CreateDeadlineInput) {
   });
 
   if (error) {
-    throw new UserFacingError("The deadline could not be created.");
+    throw new UserFacingError("No se pudo crear el vencimiento.");
   }
 
   revalidatePath("/app");

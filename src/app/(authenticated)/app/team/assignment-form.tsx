@@ -4,6 +4,7 @@ import { useActionState } from "react";
 
 import type { OpenCaseSummary } from "@/lib/server/cases";
 import type { FirmMemberSummary } from "@/lib/server/team";
+import { formatFirmRole } from "@/lib/display-labels";
 
 import { assignCaseMemberAction, type AssignCaseMemberFormState } from "./actions";
 
@@ -27,9 +28,9 @@ export function AssignmentForm({
   return (
     <form action={formAction} className="formGrid">
       <div className="field">
-        <label htmlFor="assignment-case">Case</label>
+        <label htmlFor="assignment-case">Causa</label>
         <select disabled={disabled} id="assignment-case" name="caseId" required>
-          <option value="">Select a case</option>
+          <option value="">Seleccionar causa</option>
           {cases.map((caseItem) => (
             <option key={caseItem.id} value={caseItem.id}>
               {caseItem.caseNumber} - {caseItem.title}
@@ -38,18 +39,18 @@ export function AssignmentForm({
         </select>
       </div>
       <div className="field">
-        <label htmlFor="assignment-member">Team member</label>
+        <label htmlFor="assignment-member">Integrante del equipo</label>
         <select disabled={disabled} id="assignment-member" name="profileId" required>
-          <option value="">Select a member</option>
+          <option value="">Seleccionar integrante</option>
           {members.map((member) => (
             <option key={member.profileId} value={member.profileId}>
-              {member.displayName ?? member.email} - {member.role.replace("_", " ")}
+              {member.displayName ?? member.email} - {formatFirmRole(member.role)}
             </option>
           ))}
         </select>
       </div>
       <div className="field">
-        <label htmlFor="assignment-role">Assignment role</label>
+        <label htmlFor="assignment-role">Rol de asignación</label>
         <input
           defaultValue="assigned"
           disabled={disabled}
@@ -64,7 +65,7 @@ export function AssignmentForm({
         </p>
       ) : null}
       <button className="button" disabled={disabled || pending} type="submit">
-        {pending ? "Assigning..." : "Assign case access"}
+        {pending ? "Asignando..." : "Asignar acceso a la causa"}
       </button>
     </form>
   );

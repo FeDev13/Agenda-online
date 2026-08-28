@@ -18,34 +18,34 @@ export default async function DashboardPage() {
     <>
       <div className="pageHeader">
         <div>
-          <h1>Dashboard</h1>
-          <p>Open matter load and upcoming scheduling commitments.</p>
+          <h1>Inicio</h1>
+          <p>Causas abiertas y próximos compromisos de agenda.</p>
         </div>
         <div>
           <Link className="button" href="/app/cases">
-            Manage cases
+            Gestionar causas
           </Link>
         </div>
       </div>
 
-      <section className="metricGrid" aria-label="Firm metrics">
+      <section className="metricGrid" aria-label="Indicadores del estudio">
         <div className="metric">
-          <span>Open cases</span>
+          <span>Causas abiertas</span>
           <strong>{cases.length}</strong>
         </div>
         <div className="metric">
-          <span>Upcoming items</span>
+          <span>Próximos ítems</span>
           <strong>{schedule.length}</strong>
         </div>
         <div className="metric">
-          <span>MFA path</span>
-          <strong>Ready</strong>
+          <span>MFA</span>
+          <strong>Listo</strong>
         </div>
       </section>
 
       <div className="grid two" style={{ marginTop: 18 }}>
         <section className="panel" aria-labelledby="dashboard-cases">
-          <h2 id="dashboard-cases">Recently opened cases</h2>
+          <h2 id="dashboard-cases">Causas abiertas recientes</h2>
           {cases.length ? (
             <ul className="caseList">
               {cases.slice(0, 5).map((caseItem) => (
@@ -61,12 +61,12 @@ export default async function DashboardPage() {
               ))}
             </ul>
           ) : (
-            <p className="emptyState">No open cases are visible to this account.</p>
+            <p className="emptyState">No hay causas abiertas visibles para esta cuenta.</p>
           )}
         </section>
 
         <section className="panel" aria-labelledby="dashboard-schedule">
-          <h2 id="dashboard-schedule">Upcoming schedule</h2>
+          <h2 id="dashboard-schedule">Próxima agenda</h2>
           {schedule.length ? (
             <ul className="scheduleList">
               {schedule.slice(0, 6).map((item) => (
@@ -82,7 +82,7 @@ export default async function DashboardPage() {
               ))}
             </ul>
           ) : (
-            <p className="emptyState">No upcoming events or deadlines are visible.</p>
+            <p className="emptyState">No hay eventos ni vencimientos visibles.</p>
           )}
         </section>
       </div>
@@ -92,12 +92,12 @@ export default async function DashboardPage() {
         style={{ marginTop: 18 }}
         aria-labelledby="security-note"
       >
-        <h2 id="security-note">Access posture</h2>
+        <h2 id="security-note">Acceso</h2>
         <p className="muted">
-          Case data is read through server-only services and Supabase RLS. This account
-          can {canManageCases(user.membership.role) ? "" : "not "}create cases and can{" "}
-          {canManageScheduling(user.membership.role) ? "" : "not "}create scheduling
-          entries.
+          Los datos de las causas se leen mediante servicios del servidor y RLS de
+          Supabase. Esta cuenta {canManageCases(user.membership.role) ? "puede" : "no puede"}{" "}
+          crear causas y {canManageScheduling(user.membership.role) ? "puede" : "no puede"}{" "}
+          crear entradas de agenda.
         </p>
       </section>
     </>
@@ -107,10 +107,11 @@ export default async function DashboardPage() {
 function NoActiveFirm() {
   return (
     <section className="panel" aria-labelledby="no-access-title">
-      <h1 id="no-access-title">No active firm access</h1>
+      <h1 id="no-access-title">Sin acceso activo al estudio</h1>
       <p className="muted">
-        This account is signed in but does not have an active firm membership. An admin
-        must create or accept an invite before case data is available.
+        Esta cuenta ingresó correctamente, pero no tiene una membresía activa en un
+        estudio. Una persona administradora debe crear o aceptar la invitación antes de
+        habilitar datos de causas.
       </p>
     </section>
   );

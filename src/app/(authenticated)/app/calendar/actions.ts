@@ -22,14 +22,14 @@ export async function createEventAction(_state: ScheduleFormState, formData: For
 
   if (!parsed.success) {
     return {
-      message: parsed.error.issues[0]?.message ?? "Check the event fields.",
+      message: parsed.error.issues[0]?.message ?? "Revisá los datos del evento.",
       ok: false
     };
   }
 
   try {
     await createEvent(parsed.data);
-    return { message: "Event created.", ok: true };
+    return { message: "Evento creado.", ok: true };
   } catch (error) {
     return { message: toUserMessage(error), ok: false };
   }
@@ -49,14 +49,14 @@ export async function createDeadlineAction(
 
   if (!parsed.success) {
     return {
-      message: parsed.error.issues[0]?.message ?? "Check the deadline fields.",
+      message: parsed.error.issues[0]?.message ?? "Revisá los datos del vencimiento.",
       ok: false
     };
   }
 
   try {
     await createDeadline(parsed.data);
-    return { message: "Deadline created.", ok: true };
+    return { message: "Vencimiento creado.", ok: true };
   } catch (error) {
     return { message: toUserMessage(error), ok: false };
   }

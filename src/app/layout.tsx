@@ -4,14 +4,14 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Agenda Legal",
-  description: "Internal law-firm case scheduling application"
+  description: "Agenda interna para la gestión de causas de un estudio jurídico"
 };
 
 export default function RootLayout({
   children
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="es-AR">
       <body>{children}</body>
     </html>
   );

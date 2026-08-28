@@ -13,8 +13,8 @@ export default async function SignInPage({
       <section className="authPanel" aria-labelledby="signin-title">
         <h1 id="signin-title">Agenda Legal</h1>
         <p>
-          Sign in with your firm invite. Public self-registration is intentionally
-          unavailable.
+          Ingresá con la invitación de tu estudio. El registro público está
+          deshabilitado.
         </p>
         <SignInForm next={next} />
       </section>

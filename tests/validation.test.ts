@@ -18,8 +18,8 @@ describe("case and scheduling validation", () => {
       calculationNotes: "",
       caseId: "10000000-0000-4000-8000-000000000001",
       dueOn: "2026-09-15",
-      ruleSource: "Manual court order review",
-      title: "Respond to motion"
+      ruleSource: "Revision manual de orden judicial",
+      title: "Contestar traslado"
     });
 
     expect(parsed.dueOn).toBe("2026-09-15");
@@ -35,10 +35,10 @@ describe("case and scheduling validation", () => {
       caseId: "10000000-0000-4000-8000-000000000001",
       description: "",
       endsAtLocal: "2026-09-15T11:00",
-      location: "Courtroom 4",
+      location: "Sala de audiencias 4",
       startsAtLocal: "2026-09-15T10:00",
       timezone: "America/Argentina/Buenos_Aires",
-      title: "Hearing"
+      title: "Audiencia"
     });
 
     expect(parsed.startsAtLocal).toBe("2026-09-15T10:00");
@@ -53,7 +53,7 @@ describe("case and scheduling validation", () => {
       location: "",
       startsAtLocal: "2026-09-15T10:00",
       timezone: "America/Argentina/Buenos_Aires",
-      title: "Hearing"
+      title: "Audiencia"
     });
 
     expect(parsed.endsAtLocal).toBeNull();
@@ -67,7 +67,7 @@ describe("case and scheduling validation", () => {
       location: "",
       startsAtLocal: "2026-02-31T10:00",
       timezone: "America/Argentina/Buenos_Aires",
-      title: "Hearing"
+      title: "Audiencia"
     });
 
     const unsupportedTimezone = createEventSchema.safeParse({
@@ -77,7 +77,7 @@ describe("case and scheduling validation", () => {
       location: "",
       startsAtLocal: "2026-09-15T10:00",
       timezone: "Buenos Aires",
-      title: "Hearing"
+      title: "Audiencia"
     });
 
     expect(impossibleLocalTime.success).toBe(false);
@@ -92,7 +92,7 @@ describe("case and scheduling validation", () => {
       location: "",
       startsAtLocal: "2026-09-15T10:00",
       timezone: "America/Argentina/Buenos_Aires",
-      title: "Hearing"
+      title: "Audiencia"
     });
 
     expect(parsed.success).toBe(false);
@@ -101,24 +101,24 @@ describe("case and scheduling validation", () => {
   it("validates case notes, tasks, and document metadata", () => {
     expect(
       createNoteSchema.parse({
-        body: "Reviewed synthetic court notice.",
+        body: "Se reviso la notificacion judicial sintetica.",
         caseId: "10000000-0000-4000-8000-000000000001"
       }).body
-    ).toBe("Reviewed synthetic court notice.");
+    ).toBe("Se reviso la notificacion judicial sintetica.");
 
     expect(
       createTaskSchema.parse({
         assignedTo: "",
         caseId: "10000000-0000-4000-8000-000000000001",
         dueOn: "",
-        title: "Prepare filing checklist"
+        title: "Preparar lista de control de presentacion"
       })
     ).toMatchObject({ assignedTo: null, dueOn: null });
 
     expect(
       createDocumentMetadataSchema.parse({
         caseId: "10000000-0000-4000-8000-000000000001",
-        displayName: "Synthetic filing.pdf",
+        displayName: "presentacion-sintetica.pdf",
         mimeType: "application/pdf",
         sizeBytes: "1024"
       }).sizeBytes
@@ -129,7 +129,7 @@ describe("case and scheduling validation", () => {
     expect(
       createDocumentMetadataSchema.safeParse({
         caseId: "10000000-0000-4000-8000-000000000001",
-        displayName: "Oversized.pdf",
+        displayName: "archivo-excesivo.pdf",
         mimeType: "application/pdf",
         sizeBytes: "52428801"
       }).success

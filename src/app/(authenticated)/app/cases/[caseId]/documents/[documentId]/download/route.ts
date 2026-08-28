@@ -18,7 +18,7 @@ export async function GET(
     return NextResponse.redirect(signedUrl);
   } catch (error) {
     if (error instanceof UserFacingError) {
-      return new NextResponse("Document unavailable.", { status: 404 });
+      return new NextResponse("Documento no disponible.", { status: 404 });
     }
 
     throw error;

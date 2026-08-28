@@ -74,8 +74,8 @@ values
 
 insert into public.firms (id, name)
 values
-  ('20000000-0000-4000-8000-000000000001', 'Synthetic Firm A'),
-  ('30000000-0000-4000-8000-000000000001', 'Synthetic Firm B');
+  ('20000000-0000-4000-8000-000000000001', 'Estudio Sintetico A'),
+  ('30000000-0000-4000-8000-000000000001', 'Estudio Sintetico B');
 
 insert into public.firm_memberships (firm_id, profile_id, role, status, accepted_at)
 values
@@ -113,13 +113,13 @@ values
   (
     '21000000-0000-4000-8000-000000000001',
     '20000000-0000-4000-8000-000000000001',
-    'Synthetic Client A',
+    'Cliente Sintetico A',
     'aaaaaaaa-0000-4000-8000-000000000001'
   ),
   (
     '31000000-0000-4000-8000-000000000001',
     '30000000-0000-4000-8000-000000000001',
-    'Synthetic Client B',
+    'Cliente Sintetico B',
     'bbbbbbbb-0000-4000-8000-000000000001'
   );
 
@@ -130,7 +130,7 @@ values
     '20000000-0000-4000-8000-000000000001',
     '21000000-0000-4000-8000-000000000001',
     'A-001',
-    'Synthetic Assigned Case',
+    'Causa asignada sintetica',
     '2026-09-01',
     'aaaaaaaa-0000-4000-8000-000000000001'
   ),
@@ -139,7 +139,7 @@ values
     '30000000-0000-4000-8000-000000000001',
     '31000000-0000-4000-8000-000000000001',
     'B-001',
-    'Synthetic Other Firm Case',
+    'Causa sintetica de otro estudio',
     '2026-09-01',
     'bbbbbbbb-0000-4000-8000-000000000001'
   );
@@ -189,7 +189,7 @@ select throws_ok(
       '30000000-0000-4000-8000-000000000001',
       '31000000-0000-4000-8000-000000000001',
       'B-999',
-      'Forbidden Cross-Firm Case',
+      'Causa prohibida entre estudios',
       '2026-09-02',
       'aaaaaaaa-0000-4000-8000-000000000001'
     )
@@ -216,11 +216,11 @@ select lives_ok(
   $$
     select public.create_case_event(
       '22000000-0000-4000-8000-000000000001',
-      'Synthetic Hearing Prep',
+      'Preparacion sintetica de audiencia',
       '2026-09-15 10:30'::timestamp,
       '2026-09-15 11:30'::timestamp,
       'America/Argentina/Buenos_Aires',
-      'Conference room',
+      'Sala de reuniones',
       null
     )
   $$,
@@ -228,7 +228,7 @@ select lives_ok(
 );
 
 select is(
-  (select timezone from public.events where title = 'Synthetic Hearing Prep'),
+  (select timezone from public.events where title = 'Preparacion sintetica de audiencia'),
   'America/Argentina/Buenos_Aires',
   'event retains original IANA timezone'
 );
@@ -237,17 +237,17 @@ select lives_ok(
   $$
     select public.create_legal_deadline(
       '22000000-0000-4000-8000-000000000001',
-      'Synthetic Filing Deadline',
+      'Vencimiento sintetico de presentacion',
       '2026-09-15'::date,
-      'Manual court order review',
-      'Entered manually; no automated calculation'
+      'Revision manual de orden judicial',
+      'Carga manual; sin calculo automatizado'
     )
   $$,
   'assigned paralegal can create a date-only legal deadline'
 );
 
 select is(
-  (select due_on::text from public.case_deadlines where title = 'Synthetic Filing Deadline'),
+  (select due_on::text from public.case_deadlines where title = 'Vencimiento sintetico de presentacion'),
   '2026-09-15',
   'deadline preserves date-only semantics'
 );
@@ -263,7 +263,7 @@ select throws_ok(
   $$
     select public.create_legal_deadline(
       '22000000-0000-4000-8000-000000000001',
-      'Forbidden Reader Deadline',
+      'Vencimiento prohibido para lector',
       '2026-09-16'::date,
       null,
       null

@@ -14,14 +14,14 @@ export async function signInAction(_state: SignInState, formData: FormData) {
   const next = String(formData.get("next") ?? "/app");
 
   if (!email || !password) {
-    return { message: "Enter your email and password." };
+    return { message: "Ingresá tu email y contraseña." };
   }
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return { message: "Sign-in failed. Check your invite and credentials." };
+    return { message: "No se pudo ingresar. Revisá tu invitación y credenciales." };
   }
 
   redirect(next.startsWith("/app") ? next : "/app");

@@ -21,14 +21,14 @@ export async function assignCaseMemberAction(
 
   if (!parsed.success) {
     return {
-      message: parsed.error.issues[0]?.message ?? "Check the assignment fields.",
+      message: parsed.error.issues[0]?.message ?? "Revisá los datos de la asignación.",
       ok: false
     };
   }
 
   try {
     await assignCaseMember(parsed.data);
-    return { message: "Case access assigned.", ok: true };
+    return { message: "Acceso a la causa asignado.", ok: true };
   } catch (error) {
     return { message: toUserMessage(error), ok: false };
   }

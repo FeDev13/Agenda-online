@@ -11,7 +11,7 @@ describe("route smoke checks", () => {
     );
 
     expect(signInPage.replace(/\s+/g, " ")).toContain(
-      "Public self-registration is intentionally unavailable"
+      "El registro público está deshabilitado."
     );
   });
 
@@ -34,7 +34,7 @@ describe("route smoke checks", () => {
     );
 
     expect(casesPage).toContain("/app/cases/${caseItem.id}");
-    expect(casesPage).toContain("View case");
+    expect(casesPage).toContain("Ver causa");
   });
 
   it("exposes private document upload and signed download surfaces", () => {
@@ -53,7 +53,7 @@ describe("route smoke checks", () => {
       "utf8"
     );
 
-    expect(forms).toContain("Upload document");
+    expect(forms).toContain("Subir documento");
     expect(forms).toContain('type="file"');
     expect(forms).toContain("uploadDocumentAction");
     expect(downloadRoute).toContain("createSignedDocumentDownloadUrl");
@@ -68,7 +68,7 @@ describe("route smoke checks", () => {
 
     expect(casePage).toContain("archiveNoteAction");
     expect(casePage).toContain("updateTaskStatusAction");
-    expect(casePage).toContain("Archive");
-    expect(casePage).toContain("Complete");
+    expect(casePage).toContain("Archivar");
+    expect(casePage).toContain("Completar");
   });
 });

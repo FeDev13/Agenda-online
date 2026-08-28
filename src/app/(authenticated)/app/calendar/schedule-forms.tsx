@@ -32,16 +32,16 @@ export function ScheduleForms({
   return (
     <div className="grid">
       <section className="panel" aria-labelledby="new-event-title">
-        <h2 id="new-event-title">Create event</h2>
+        <h2 id="new-event-title">Crear evento</h2>
         <form action={eventAction} className="formGrid">
           <CaseSelect cases={cases} disabled={disabled} id="event-case" />
           <div className="field">
-            <label htmlFor="event-title">Title</label>
+            <label htmlFor="event-title">Título</label>
             <input disabled={disabled} id="event-title" name="title" required />
           </div>
           <div className="fieldRow">
             <div className="field">
-              <label htmlFor="startsAtLocal">Starts</label>
+              <label htmlFor="startsAtLocal">Inicio</label>
               <input
                 disabled={disabled}
                 id="startsAtLocal"
@@ -51,7 +51,7 @@ export function ScheduleForms({
               />
             </div>
             <div className="field">
-              <label htmlFor="endsAtLocal">Ends</label>
+              <label htmlFor="endsAtLocal">Fin</label>
               <input
                 disabled={disabled}
                 id="endsAtLocal"
@@ -61,7 +61,7 @@ export function ScheduleForms({
             </div>
           </div>
           <div className="field">
-            <label htmlFor="timezone">Timezone</label>
+            <label htmlFor="timezone">Zona horaria</label>
             <input
               defaultValue="America/Argentina/Buenos_Aires"
               disabled={disabled}
@@ -71,11 +71,11 @@ export function ScheduleForms({
             />
           </div>
           <div className="field">
-            <label htmlFor="location">Location</label>
+            <label htmlFor="location">Lugar</label>
             <input disabled={disabled} id="location" name="location" />
           </div>
           <div className="field">
-            <label htmlFor="event-description">Description</label>
+            <label htmlFor="event-description">Descripción</label>
             <textarea disabled={disabled} id="event-description" name="description" />
           </div>
           {eventState.message ? (
@@ -84,29 +84,29 @@ export function ScheduleForms({
             </p>
           ) : null}
           <button className="button" disabled={disabled || eventPending} type="submit">
-            {eventPending ? "Creating..." : "Create event"}
+            {eventPending ? "Creando..." : "Crear evento"}
           </button>
         </form>
       </section>
 
       <section className="panel" aria-labelledby="new-deadline-title">
-        <h2 id="new-deadline-title">Create legal deadline</h2>
+        <h2 id="new-deadline-title">Crear vencimiento legal</h2>
         <form action={deadlineAction} className="formGrid">
           <CaseSelect cases={cases} disabled={disabled} id="deadline-case" />
           <div className="field">
-            <label htmlFor="deadline-title">Title</label>
+            <label htmlFor="deadline-title">Título</label>
             <input disabled={disabled} id="deadline-title" name="title" required />
           </div>
           <div className="field">
-            <label htmlFor="dueOn">Due date</label>
+            <label htmlFor="dueOn">Fecha de vencimiento</label>
             <input disabled={disabled} id="dueOn" name="dueOn" required type="date" />
           </div>
           <div className="field">
-            <label htmlFor="ruleSource">Rule source</label>
+            <label htmlFor="ruleSource">Fuente de la regla</label>
             <input disabled={disabled} id="ruleSource" name="ruleSource" />
           </div>
           <div className="field">
-            <label htmlFor="calculationNotes">Calculation notes</label>
+            <label htmlFor="calculationNotes">Notas de cálculo</label>
             <textarea disabled={disabled} id="calculationNotes" name="calculationNotes" />
           </div>
           {deadlineState.message ? (
@@ -115,7 +115,7 @@ export function ScheduleForms({
             </p>
           ) : null}
           <button className="button" disabled={disabled || deadlinePending} type="submit">
-            {deadlinePending ? "Creating..." : "Create deadline"}
+            {deadlinePending ? "Creando..." : "Crear vencimiento"}
           </button>
         </form>
       </section>
@@ -134,9 +134,9 @@ function CaseSelect({
 }) {
   return (
     <div className="field">
-      <label htmlFor={id}>Case</label>
+      <label htmlFor={id}>Causa</label>
       <select disabled={disabled} id={id} name="caseId" required>
-        <option value="">Select a case</option>
+        <option value="">Seleccionar causa</option>
         {cases.map((caseItem) => (
           <option key={caseItem.id} value={caseItem.id}>
             {caseItem.caseNumber} - {caseItem.title}

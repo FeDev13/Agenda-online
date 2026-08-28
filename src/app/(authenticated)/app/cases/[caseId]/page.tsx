@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { formatCaseStatus, formatTaskStatus } from "@/lib/display-labels";
 import { canManageCaseWork } from "@/lib/domain/authorization";
 import { getCurrentUser } from "@/lib/server/auth";
 import {
@@ -38,7 +39,7 @@ export default async function CaseDetailPage({
       <div className="pageHeader">
         <div>
           <p className="muted">
-            <Link href="/app/cases">Open cases</Link> / {caseItem.caseNumber}
+            <Link href="/app/cases">Causas abiertas</Link> / {caseItem.caseNumber}
           </p>
           <h1>{caseItem.title}</h1>
           <p>
@@ -47,34 +48,34 @@ export default async function CaseDetailPage({
             {caseItem.docketNumber ? ` · ${caseItem.docketNumber}` : ""}
           </p>
         </div>
-        <span className="badge">{caseItem.status}</span>
+        <span className="badge">{formatCaseStatus(caseItem.status)}</span>
       </div>
 
-      <section className="metricGrid" aria-label="Case summary">
+      <section className="metricGrid" aria-label="Resumen de la causa">
         <div className="metric">
-          <span>Opened</span>
+          <span>Fecha de apertura</span>
           <strong>{caseItem.openedOn}</strong>
         </div>
         <div className="metric">
-          <span>Jurisdiction</span>
-          <strong>{caseItem.jurisdiction ?? "Not set"}</strong>
+          <span>Jurisdicción</span>
+          <strong>{caseItem.jurisdiction ?? "Sin datos"}</strong>
         </div>
         <div className="metric">
-          <span>Case members</span>
+          <span>Integrantes</span>
           <strong>{members.length}</strong>
         </div>
       </section>
 
       {caseItem.description ? (
         <section className="panel" style={{ marginTop: 18 }}>
-          <h2>Description</h2>
+          <h2>Descripción</h2>
           <p>{caseItem.description}</p>
         </section>
       ) : null}
 
       <div className="grid two" style={{ marginTop: 18 }}>
         <section className="panel" aria-labelledby="notes-title">
-          <h2 id="notes-title">Notes</h2>
+          <h2 id="notes-title">Notas</h2>
           {notes.length ? (
             <ul className="caseList">
               {notes.map((note) => (
@@ -89,7 +90,7 @@ export default async function CaseDetailPage({
                         <input name="caseId" type="hidden" value={caseId} />
                         <input name="noteId" type="hidden" value={note.id} />
                         <button className="secondaryButton compactButton" type="submit">
-                          Archive
+                          Archivar
                         </button>
                       </form>
                     ) : null}
@@ -98,12 +99,12 @@ export default async function CaseDetailPage({
               ))}
             </ul>
           ) : (
-            <p className="emptyState">No notes are visible for this case.</p>
+            <p className="emptyState">No hay notas visibles para esta causa.</p>
           )}
         </section>
 
         <section className="panel" aria-labelledby="tasks-title">
-          <h2 id="tasks-title">Tasks</h2>
+          <h2 id="tasks-title">Tareas</h2>
           {tasks.length ? (
             <ul className="caseList">
               {tasks.map((task) => (
@@ -112,12 +113,12 @@ export default async function CaseDetailPage({
                     <div>
                       <strong>{task.title}</strong>
                       <p className="muted">
-                        {task.assignedToName ?? "Unassigned"}
-                        {task.dueOn ? ` · due ${task.dueOn}` : ""}
+                        {task.assignedToName ?? "Sin asignar"}
+                        {task.dueOn ? ` · vence ${task.dueOn}` : ""}
                       </p>
                     </div>
                     <div className="stackedActions">
-                      <span className="badge">{task.status}</span>
+                      <span className="badge">{formatTaskStatus(task.status)}</span>
                       {canManage ? (
                         <form action={updateTaskStatusAction}>
                           <input name="caseId" type="hidden" value={caseId} />
@@ -128,7 +129,7 @@ export default async function CaseDetailPage({
                             value={task.status === "completed" ? "open" : "completed"}
                           />
                           <button className="secondaryButton compactButton" type="submit">
-                            {task.status === "completed" ? "Reopen" : "Complete"}
+                            {task.status === "completed" ? "Reabrir" : "Completar"}
                           </button>
                         </form>
                       ) : null}
@@ -138,7 +139,7 @@ export default async function CaseDetailPage({
               ))}
             </ul>
           ) : (
-            <p className="emptyState">No tasks are visible for this case.</p>
+            <p className="emptyState">No hay tareas visibles para esta causa.</p>
           )}
         </section>
       </div>
@@ -148,30 +149,30 @@ export default async function CaseDetailPage({
         style={{ marginTop: 18 }}
         aria-labelledby="documents-title"
       >
-        <h2 id="documents-title">Document metadata</h2>
+        <h2 id="documents-title">Documentos</h2>
         {documents.length ? (
           <div className="tableWrap">
             <table className="dataTable">
               <thead>
                 <tr>
-                  <th scope="col">Document</th>
-                  <th scope="col">MIME type</th>
-                  <th scope="col">Size</th>
-                  <th scope="col">Download</th>
+                  <th scope="col">Documento</th>
+                  <th scope="col">Tipo MIME</th>
+                  <th scope="col">Tamaño</th>
+                  <th scope="col">Descarga</th>
                 </tr>
               </thead>
               <tbody>
                 {documents.map((document) => (
                   <tr key={document.id}>
                     <td>{document.displayName}</td>
-                    <td>{document.mimeType ?? "Not set"}</td>
-                    <td>{document.sizeBytes ?? "Not set"}</td>
+                    <td>{document.mimeType ?? "Sin datos"}</td>
+                    <td>{document.sizeBytes ?? "Sin datos"}</td>
                     <td>
                       <a
                         className="textLink"
                         href={`/app/cases/${caseId}/documents/${document.id}/download`}
                       >
-                        Signed link
+                        Descargar
                       </a>
                     </td>
                   </tr>
@@ -180,13 +181,13 @@ export default async function CaseDetailPage({
             </table>
           </div>
         ) : (
-          <p className="emptyState">No document metadata is visible for this case.</p>
+          <p className="emptyState">No hay documentos visibles para esta causa.</p>
         )}
       </section>
 
       <section style={{ marginTop: 18 }}>
         {!canManage ? (
-          <p className="errorText">Your role can view this case but cannot add work.</p>
+          <p className="errorText">Tu rol puede ver esta causa, pero no agregar trabajo.</p>
         ) : null}
         <CaseWorkForms canManage={canManage} caseId={caseId} members={members} />
       </section>
@@ -197,8 +198,8 @@ export default async function CaseDetailPage({
 function NoActiveFirm() {
   return (
     <section className="panel" aria-labelledby="no-firm-title">
-      <h1 id="no-firm-title">No active firm access</h1>
-      <p className="muted">An active firm membership is required to view a case.</p>
+      <h1 id="no-firm-title">Sin acceso activo al estudio</h1>
+      <p className="muted">Se requiere una membresía activa para ver una causa.</p>
     </section>
   );
 }
