@@ -1,6 +1,6 @@
 # Milestone 001 Progress
 
-Date: 2026-08-27
+Date: 2026-08-28
 
 ## Scope
 
@@ -20,11 +20,11 @@ The implementation follows `AGENTS.md` as the authority for architecture, confid
 - Upcoming event and legal-deadline listing.
 - Event creation using local wall-clock input plus IANA timezone, converted by PostgreSQL to `timestamptz`.
 - Legal deadline creation using PostgreSQL `date` values to preserve date-only semantics.
-- Team access page for active members, current case assignments, and assigning case access.
+- Team access page for firm members, current case assignments, assigning/removing case access, changing roles, deactivating members, and reviewing recent audit entries.
 - Case detail page for reviewing case context, notes, tasks, and private document metadata.
 - Case work creation for notes, tasks, and private document uploads by admins, lawyers, and assigned paralegals.
 - Note archival and task status transitions for authorized case-work users.
-- Short-lived signed document download route after server authorization.
+- Short-lived signed document download route after server authorization and audit recording.
 - Supabase CLI-managed local stack configuration in `supabase/config.toml`.
 - Private `case-documents` storage bucket configuration and storage object RLS policies.
 - Reproducible initial migration for core entities, grants, functions, triggers, indexes, and RLS policies.
@@ -40,8 +40,8 @@ The implementation follows `AGENTS.md` as the authority for architecture, confid
 - Access requires active firm membership.
 - Case-restricted rows require firm-wide role access or explicit case assignment.
 - Cross-firm access is denied by shared PostgreSQL helper functions.
-- No hard-delete grants are provided for core business tables.
-- Audit logging foundation is append-only through grants and avoids sensitive payloads.
+- No hard-delete grants are provided for core business tables. Case assignment edges can be deleted to revoke explicit access, with the removal retained in audit entries.
+- Audit logging is append-only through grants and avoids sensitive payloads.
 - Local Supabase Auth public signup is disabled globally; the email provider remains enabled so invited or seeded users can sign in.
 - Local TOTP MFA enrollment and verification are enabled as the implementation path for mandatory MFA.
 - `read_only` users retain assigned-case visibility but are denied case-work mutations by server code and RLS.
@@ -62,9 +62,11 @@ pnpm db:reset
 pnpm test:db
 ```
 
-Fast tests passed with 6 files and 30 tests.
+Fast tests passed with 6 files and 34 tests.
 
-Database tests passed with 1 pgTAP file and 12 tests after running against the local Supabase CLI-managed PostgreSQL database.
+Database tests passed with 1 pgTAP file and 14 tests after running against the local Supabase CLI-managed PostgreSQL database.
+
+Playwright browser tests passed with 3 tests covering sign-in, case creation, case work, document upload/download surfaces, schedule entry creation, assignment add/remove, and read-only denial paths.
 
 The database test suite covers:
 
@@ -72,6 +74,7 @@ The database test suite covers:
 - Cross-firm read denial.
 - Cross-firm insert denial.
 - Case assignment access for paralegals.
+- Case assignment removal and revoked assigned-case visibility.
 - Read-only scheduling mutation denial.
 - Read-only notes, tasks, and document metadata mutation denial.
 - Date-only legal deadline persistence.
@@ -127,17 +130,16 @@ No authoritative application state is stored in `localStorage`.
 ## Remaining Production Work
 
 - Enforce MFA at runtime through Supabase Auth assurance level checks or mandatory managed SSO before storing real firm data.
-- Build administrator invite, membership management, firm bootstrap, and user offboarding workflows.
-- Add member deactivation and assignment removal flows.
+- Build administrator invite and firm bootstrap workflows.
 - Generate Supabase TypeScript types from the live schema.
-- Add full Playwright browser tests for sign-in, case creation, event creation, deadline creation, and document upload/download with synthetic auth fixtures.
-- Expand integration coverage for every role and core entity as workflows are added.
+- Expand Playwright and integration coverage for every role and core entity as workflows are added.
 - Document and test database backup/restore separately from document-storage backup/restore.
 - Define retention, export, account recovery, incident response, production rollback, and forward-fix procedures.
 - Complete dependency vulnerability review and CI enforcement before production launch.
 
 ## Recommended Next Milestone
 
-Extend operational case work:
+Extend administration and operational hardening:
 
-- Add Playwright tests for the full sign-in, case detail, case work, and document upload lifecycle using synthetic data.
+- Add invite administration and firm bootstrap flows.
+- Add runtime MFA enforcement through Supabase assurance level checks or managed SSO policy.

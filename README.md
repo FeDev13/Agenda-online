@@ -26,7 +26,7 @@ Current implementation progress and verification results are recorded in [`docs/
 - Upcoming event/deadline listing.
 - Event creation using local wall-clock time plus IANA timezone, converted in PostgreSQL to `timestamptz`.
 - Legal deadline creation using PostgreSQL `date`, preserving date-only semantics.
-- Team access page for viewing active firm members, current case assignments, and assigning case access.
+- Team access page for viewing firm members, assigning/removing case access, changing roles, deactivating members, and reviewing recent audit entries.
 - Case detail page for reviewing case context, notes, tasks, and private document metadata.
 - Case work creation for notes, tasks, and private document uploads by admins, lawyers, and assigned paralegals.
 - Note archival and task status transitions for authorized case-work users.
@@ -93,13 +93,14 @@ pnpm dev
 pnpm lint
 pnpm typecheck
 pnpm test
+pnpm test:smoke
 pnpm test:e2e
 pnpm test:db
 pnpm build
 pnpm format
 ```
 
-`pnpm test:e2e` currently runs route smoke checks. Full browser tests with Playwright should be added once local Supabase auth fixtures are scripted.
+`pnpm test:smoke` runs static route smoke checks with Vitest. `pnpm test:e2e` runs Playwright browser tests against the local Next.js app and Supabase seed users.
 
 ## Testing
 
@@ -111,6 +112,7 @@ Fast tests cover:
 - Case detail validation for notes, tasks, task status transitions, note archival, document metadata, and document upload metadata.
 - Static migration checks for RLS, no hard-delete grants, anonymous revocation, private storage policies, and cross-firm helper functions.
 - Supabase CLI config checks for invite-only auth defaults, private storage, CLI scripts, and TOTP MFA configuration.
+- Playwright browser coverage for sign-in, case creation, assignment add/remove, schedule entry creation, case work creation, document upload/download surfaces, and read-only denial paths.
 
 Database tests under `supabase/tests/rls.sql` are pgTAP tests intended for `pnpm test:db` after the local Supabase stack is running. They exercise positive and negative RLS behavior, including cross-firm denial, case assignment, read-only mutation denial, case-work mutation denial, date-only deadlines, and timezone-retaining events.
 
@@ -133,16 +135,15 @@ Database tests under `supabase/tests/rls.sql` are pgTAP tests intended for `pnpm
 - Mutations are checked in server-only code and again by PostgreSQL RLS/RPC functions.
 - Cross-firm access is denied by helper functions used by policies.
 - Anonymous database access is explicitly revoked for the application schema.
-- No hard-delete grants are provided for cases, notes, audit entries, documents, or other core business rows.
+- No hard-delete grants are provided for cases, notes, audit entries, documents, or other core business rows. Case assignment edges can be deleted to revoke explicit access, with the removal recorded in the audit log.
 - Audit entries are append-only and avoid note bodies, document contents, credentials, and tokens.
 
 ## Security Limitations and Production Readiness Remaining
 
 - Complete runtime MFA enforcement by checking Supabase Auth assurance level or relying on mandatory managed SSO policy before using real firm data.
-- Build an invite administration workflow, user offboarding, and firm bootstrap procedure.
-- Add member deactivation and case-assignment removal flows.
+- Build an invite administration workflow and firm bootstrap procedure.
 - Generate Supabase TypeScript types from the live schema to replace the hand-maintained initial `Database` type.
-- Add Playwright browser tests for sign-in, case creation, and schedule creation with synthetic auth fixtures.
+- Expand Playwright coverage for additional role boundaries and future workflows.
 - Expand role-by-role integration coverage for all core entities as workflows are added.
 - Document and test database backup/restore and document-storage restore separately.
 - Define retention, export, account recovery, incident response, production rollback, and forward-fix procedures.
