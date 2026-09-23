@@ -1,9 +1,10 @@
 import Link from "next/link";
 
-import { canManageCases } from "@/lib/domain/authorization";
+import { canArchiveCases, canManageCases } from "@/lib/domain/authorization";
 import { getCurrentUser } from "@/lib/server/auth";
 import { listOpenCases } from "@/lib/server/cases";
 
+import { archiveCaseAction } from "./actions";
 import { NewCaseForm } from "./new-case-form";
 
 export default async function CasesPage() {
@@ -15,13 +16,16 @@ export default async function CasesPage() {
 
   const cases = await listOpenCases();
   const canCreate = canManageCases(user.membership.role);
+  const canArchive = canArchiveCases(user.membership.role);
 
   return (
     <>
       <div className="pageHeader">
         <div>
           <h1>Causas abiertas</h1>
-          <p>Causas activas visibles según el estudio actual y las reglas de asignación.</p>
+          <p>
+            Causas activas visibles según el estudio actual y las reglas de asignación.
+          </p>
         </div>
       </div>
       <div className="grid two">
@@ -45,17 +49,32 @@ export default async function CasesPage() {
                     </div>
                     <span className="badge">{caseItem.caseNumber}</span>
                   </div>
+                  {canArchive ? (
+                    <form action={archiveCaseAction} className="cardFooterAction">
+                      <input name="caseId" type="hidden" value={caseItem.id} />
+                      <button
+                        className="secondaryButton dangerButton compactButton"
+                        type="submit"
+                      >
+                        Archivar causa
+                      </button>
+                    </form>
+                  ) : null}
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="emptyState">No hay causas abiertas visibles para esta cuenta.</p>
+            <p className="emptyState">
+              No hay causas abiertas visibles para esta cuenta.
+            </p>
           )}
         </section>
         <section className="panel" aria-labelledby="create-case-title">
           <h2 id="create-case-title">Crear una causa</h2>
           {!canCreate ? (
-            <p className="errorText">Solo administración y abogados pueden crear causas.</p>
+            <p className="errorText">
+              Solo administración y abogados pueden crear causas.
+            </p>
           ) : null}
           <NewCaseForm canCreate={canCreate} />
         </section>

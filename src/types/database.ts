@@ -45,6 +45,8 @@ export type Database = {
           confirmed_at: string | null;
           created_by: string;
           created_at: string;
+          hidden_at: string | null;
+          hidden_by: string | null;
           updated_at: string;
         };
         Insert: {
@@ -57,6 +59,8 @@ export type Database = {
           confirmed_by?: string | null;
           confirmed_at?: string | null;
           created_by: string;
+          hidden_at?: string | null;
+          hidden_by?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["case_deadlines"]["Insert"]>;
         Relationships: [];
@@ -154,6 +158,8 @@ export type Database = {
           location: string | null;
           created_by: string;
           created_at: string;
+          hidden_at: string | null;
+          hidden_by: string | null;
           updated_at: string;
         };
         Insert: {
@@ -166,6 +172,8 @@ export type Database = {
           timezone: string;
           location?: string | null;
           created_by: string;
+          hidden_at?: string | null;
+          hidden_by?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["events"]["Insert"]>;
         Relationships: [];
@@ -333,6 +341,12 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      archive_case: {
+        Args: {
+          p_case_id: string;
+        };
+        Returns: void;
+      };
       create_case_event: {
         Args: {
           p_case_id: string;
@@ -368,6 +382,13 @@ export type Database = {
           p_title: string;
         };
         Returns: string;
+      };
+      hide_schedule_item: {
+        Args: {
+          p_item_id: string;
+          p_item_kind: string;
+        };
+        Returns: void;
       };
     };
     Enums: {

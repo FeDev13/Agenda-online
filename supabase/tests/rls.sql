@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(14);
+select plan(23);
 
 insert into auth.users (
   id,
@@ -24,7 +24,7 @@ values
     '00000000-0000-0000-0000-000000000000',
     'authenticated',
     'authenticated',
-    'admin-a@example.test',
+    'rls-admin-a@example.test',
     'synthetic-password-hash',
     now(),
     '{}'::jsonb,
@@ -51,6 +51,19 @@ values
     'authenticated',
     'authenticated',
     'readonly-a@example.test',
+    'synthetic-password-hash',
+    now(),
+    '{}'::jsonb,
+    '{}'::jsonb,
+    now(),
+    now()
+  ),
+  (
+    'aaaaaaaa-0000-4000-8000-000000000004',
+    '00000000-0000-0000-0000-000000000000',
+    'authenticated',
+    'authenticated',
+    'admin-a@example.test',
     'synthetic-password-hash',
     now(),
     '{}'::jsonb,
@@ -97,6 +110,13 @@ values
     '20000000-0000-4000-8000-000000000001',
     'aaaaaaaa-0000-4000-8000-000000000003',
     'read_only',
+    'active',
+    now()
+  ),
+  (
+    '20000000-0000-4000-8000-000000000001',
+    'aaaaaaaa-0000-4000-8000-000000000004',
+    'admin',
     'active',
     now()
   ),
@@ -199,6 +219,26 @@ select throws_ok(
   'cross-firm case insert is denied'
 );
 
+select throws_ok(
+  $$
+    select public.archive_case('22000000-0000-4000-8000-000000000001')
+  $$,
+  '42501',
+  'not authorized',
+  'firm lawyer cannot archive cases through the archive RPC'
+);
+
+select throws_ok(
+  $$
+    update public.cases
+    set status = 'archived'
+    where id = '22000000-0000-4000-8000-000000000001'
+  $$,
+  '42501',
+  'not authorized',
+  'firm lawyer cannot archive cases through direct table update'
+);
+
 select set_config('request.jwt.claim.sub', 'aaaaaaaa-0000-4000-8000-000000000002', true);
 select set_config(
   'request.jwt.claims',
@@ -252,11 +292,44 @@ select is(
   'deadline preserves date-only semantics'
 );
 
+select lives_ok(
+  $$
+    select public.hide_schedule_item(
+      'event',
+      (
+        select id
+        from public.events
+        where title = 'Preparacion sintetica de audiencia'
+      )
+    )
+  $$,
+  'assigned paralegal can hide an authorized event'
+);
+
+select ok(
+  (
+    select hidden_at is not null
+    from public.events
+    where title = 'Preparacion sintetica de audiencia'
+  ),
+  'hidden event keeps the row and stores a hidden timestamp'
+);
+
 select set_config('request.jwt.claim.sub', 'aaaaaaaa-0000-4000-8000-000000000001', true);
 select set_config(
   'request.jwt.claims',
   '{"sub":"aaaaaaaa-0000-4000-8000-000000000001","role":"authenticated"}',
   true
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.audit_log
+    where action = 'event.hidden'
+  ),
+  1,
+  'hidden event writes an audit entry'
 );
 
 select lives_ok(
@@ -287,6 +360,22 @@ select set_config(
   'request.jwt.claims',
   '{"sub":"aaaaaaaa-0000-4000-8000-000000000003","role":"authenticated"}',
   true
+);
+
+select throws_ok(
+  $$
+    select public.hide_schedule_item(
+      'deadline',
+      (
+        select id
+        from public.case_deadlines
+        where title = 'Vencimiento sintetico de presentacion'
+      )
+    )
+  $$,
+  '42501',
+  'not authorized',
+  'read-only member cannot hide schedule items even when assigned'
 );
 
 select throws_ok(
@@ -354,6 +443,37 @@ select throws_ok(
   '42501',
   'new row violates row-level security policy for table "documents"',
   'read-only member cannot create document metadata even when assigned'
+);
+
+select set_config('request.jwt.claim.sub', 'aaaaaaaa-0000-4000-8000-000000000004', true);
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"aaaaaaaa-0000-4000-8000-000000000004","role":"authenticated"}',
+  true
+);
+
+select lives_ok(
+  $$
+    select public.archive_case('22000000-0000-4000-8000-000000000001')
+  $$,
+  'firm admin can archive an open case'
+);
+
+select is(
+  (select status::text from public.cases where id = '22000000-0000-4000-8000-000000000001'),
+  'archived',
+  'case archive keeps the row and marks it archived'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.audit_log
+    where action = 'case.archived'
+      and target_id = '22000000-0000-4000-8000-000000000001'
+  ),
+  1,
+  'case archive writes an audit entry'
 );
 
 select * from finish();

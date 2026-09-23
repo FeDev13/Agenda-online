@@ -122,6 +122,10 @@ export const createCaseSchema = z.object({
   title: z.string().trim().min(1, "El título de la causa es obligatorio.").max(200)
 });
 
+export const archiveCaseSchema = z.object({
+  caseId: z.string().uuid("Seleccioná una causa.")
+});
+
 export const createEventSchema = z
   .object({
     caseId: z.string().uuid("Seleccioná una causa."),
@@ -142,12 +146,9 @@ export const createEventSchema = z
     }
   );
 
-export const createDeadlineSchema = z.object({
-  calculationNotes: optionalTrimmedString,
-  caseId: z.string().uuid("Seleccioná una causa."),
-  dueOn: dateOnlySchema,
-  ruleSource: optionalTrimmedString,
-  title: z.string().trim().min(1, "El título del vencimiento es obligatorio.").max(200)
+export const hideScheduleItemSchema = z.object({
+  id: z.string().uuid("Seleccioná un ítem de agenda."),
+  kind: z.enum(["deadline", "event"])
 });
 
 export const createNoteSchema = z.object({
@@ -174,7 +175,11 @@ export const createTaskSchema = z.object({
 
 export const createDocumentMetadataSchema = z.object({
   caseId: z.string().uuid("Seleccioná una causa."),
-  displayName: z.string().trim().min(1, "El nombre del documento es obligatorio.").max(220),
+  displayName: z
+    .string()
+    .trim()
+    .min(1, "El nombre del documento es obligatorio.")
+    .max(220),
   mimeType: optionalTrimmedString,
   sizeBytes: z
     .string()
@@ -211,11 +216,12 @@ export const updateTaskStatusSchema = z.object({
 });
 
 export type CreateCaseInput = z.infer<typeof createCaseSchema>;
-export type CreateDeadlineInput = z.infer<typeof createDeadlineSchema>;
 export type CreateDocumentMetadataInput = z.infer<typeof createDocumentMetadataSchema>;
 export type CreateDocumentUploadInput = z.infer<typeof createDocumentUploadSchema>;
 export type CreateEventInput = z.infer<typeof createEventSchema>;
 export type CreateNoteInput = z.infer<typeof createNoteSchema>;
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
+export type HideScheduleItemInput = z.infer<typeof hideScheduleItemSchema>;
 export type ArchiveNoteInput = z.infer<typeof archiveNoteSchema>;
+export type ArchiveCaseInput = z.infer<typeof archiveCaseSchema>;
 export type UpdateTaskStatusInput = z.infer<typeof updateTaskStatusSchema>;

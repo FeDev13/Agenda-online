@@ -329,6 +329,28 @@ as $$
     );
 $$;
 
+create or replace function public.enforce_case_archive_admin()
+returns trigger
+language plpgsql
+security invoker
+set search_path = public
+as $$
+begin
+  if old.status is distinct from new.status
+    and (old.status = 'archived' or new.status = 'archived')
+    and not public.has_firm_role(new.firm_id, array['admin']::public.firm_role[])
+  then
+    raise exception 'not authorized' using errcode = '42501';
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger enforce_case_archive_admin
+  before update on public.cases
+  for each row execute function public.enforce_case_archive_admin();
+
 create or replace function public.create_case_with_client(
   p_firm_id uuid,
   p_client_display_name text,
@@ -390,6 +412,38 @@ begin
   values (p_firm_id, auth.uid(), 'case.created', 'cases', v_case_id);
 
   return v_case_id;
+end;
+$$;
+
+create or replace function public.archive_case(p_case_id uuid)
+returns void
+language plpgsql
+security invoker
+set search_path = public
+as $$
+declare
+  v_firm_id uuid;
+begin
+  select firm_id into v_firm_id
+  from public.cases
+  where id = p_case_id
+    and status = 'open';
+
+  if v_firm_id is null
+    or not public.has_firm_role(v_firm_id, array['admin']::public.firm_role[])
+  then
+    raise exception 'not authorized' using errcode = '42501';
+  end if;
+
+  update public.cases
+  set status = 'archived',
+      updated_by = auth.uid()
+  where id = p_case_id
+    and firm_id = v_firm_id
+    and status = 'open';
+
+  insert into public.audit_log (firm_id, actor_profile_id, action, target_table, target_id)
+  values (v_firm_id, auth.uid(), 'case.archived', 'cases', p_case_id);
 end;
 $$;
 
@@ -789,6 +843,7 @@ grant execute on function public.is_active_firm_member(uuid) to authenticated;
 grant execute on function public.active_firm_role(uuid) to authenticated;
 grant execute on function public.has_firm_role(uuid, public.firm_role[]) to authenticated;
 grant execute on function public.can_access_case(uuid, uuid) to authenticated;
+grant execute on function public.archive_case(uuid) to authenticated;
 
 grant execute on function public.create_case_with_client(
   uuid,

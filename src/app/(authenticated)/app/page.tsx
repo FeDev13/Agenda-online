@@ -1,9 +1,12 @@
 import Link from "next/link";
 
 import { canManageCases, canManageScheduling } from "@/lib/domain/authorization";
+import { formatScheduleKind } from "@/lib/display-labels";
 import { getCurrentUser } from "@/lib/server/auth";
 import { listOpenCases } from "@/lib/server/cases";
 import { listUpcomingSchedule } from "@/lib/server/scheduling";
+
+import { hideScheduleItemAction } from "./actions";
 
 export default async function DashboardPage() {
   const user = await getCurrentUser();
@@ -13,6 +16,7 @@ export default async function DashboardPage() {
   }
 
   const [cases, schedule] = await Promise.all([listOpenCases(), listUpcomingSchedule()]);
+  const canHideSchedule = canManageScheduling(user.membership.role);
 
   return (
     <>
@@ -61,7 +65,9 @@ export default async function DashboardPage() {
               ))}
             </ul>
           ) : (
-            <p className="emptyState">No hay causas abiertas visibles para esta cuenta.</p>
+            <p className="emptyState">
+              No hay causas abiertas visibles para esta cuenta.
+            </p>
           )}
         </section>
 
@@ -74,9 +80,25 @@ export default async function DashboardPage() {
                   <div className="cardHeader">
                     <div>
                       <strong>{item.title}</strong>
-                      <p className="muted">{item.caseTitle}</p>
+                      <p className="muted">
+                        {item.caseTitle}
+                        {item.subtitle ? ` · ${item.subtitle}` : ""}
+                      </p>
                     </div>
-                    <span className="badge">{item.dateLabel}</span>
+                    <div className="stackedActions">
+                      <span className="badge">
+                        {formatScheduleKind(item.kind)}: {item.dateLabel}
+                      </span>
+                      {canHideSchedule && item.kind !== "task" ? (
+                        <form action={hideScheduleItemAction}>
+                          <input name="id" type="hidden" value={item.id} />
+                          <input name="kind" type="hidden" value={item.kind} />
+                          <button className="secondaryButton compactButton" type="submit">
+                            Ocultar
+                          </button>
+                        </form>
+                      ) : null}
+                    </div>
                   </div>
                 </li>
               ))}
@@ -95,9 +117,10 @@ export default async function DashboardPage() {
         <h2 id="security-note">Acceso</h2>
         <p className="muted">
           Los datos de las causas se leen mediante servicios del servidor y RLS de
-          Supabase. Esta cuenta {canManageCases(user.membership.role) ? "puede" : "no puede"}{" "}
-          crear causas y {canManageScheduling(user.membership.role) ? "puede" : "no puede"}{" "}
-          crear entradas de agenda.
+          Supabase. Esta cuenta{" "}
+          {canManageCases(user.membership.role) ? "puede" : "no puede"} crear causas y{" "}
+          {canManageScheduling(user.membership.role) ? "puede" : "no puede"} crear
+          entradas de agenda.
         </p>
       </section>
     </>

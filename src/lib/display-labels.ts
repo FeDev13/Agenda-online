@@ -71,6 +71,14 @@ export function formatTaskStatus(status: TaskStatus) {
   return taskStatusLabels[status];
 }
 
-export function formatScheduleKind(kind: "deadline" | "event") {
-  return kind === "deadline" ? "vencimiento" : "evento";
+export function formatScheduleKind(kind: "deadline" | "event" | "task") {
+  if (kind === "deadline") {
+    return "vencimiento";
+  }
+
+  if (kind === "task") {
+    return "vencimiento";
+  }
+
+  return "evento";
 }

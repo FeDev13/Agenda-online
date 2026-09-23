@@ -619,6 +619,7 @@ async function appendAuditLog(
 
 function revalidateCase(caseId: string) {
   revalidatePath("/app");
+  revalidatePath("/app/calendar");
   revalidatePath("/app/cases");
   revalidatePath(`/app/cases/${caseId}`);
 }

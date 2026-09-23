@@ -18,10 +18,12 @@ The implementation follows `AGENTS.md` as the authority for architecture, confid
 - Zod validation for case creation, event creation, deadline creation, date-only values, local datetimes, and IANA timezones.
 - Open case listing and case creation through PostgreSQL RPC.
 - Upcoming event and legal-deadline listing.
+- Non-destructive dashboard hiding for upcoming agenda items, with audit recording.
 - Event creation using local wall-clock input plus IANA timezone, converted by PostgreSQL to `timestamptz`.
 - Legal deadline creation using PostgreSQL `date` values to preserve date-only semantics.
 - Team access page for firm members, current case assignments, assigning/removing case access, changing roles, deactivating members, and reviewing recent audit entries.
 - Case detail page for reviewing case context, notes, tasks, and private document metadata.
+- Admin-only case archival from the open-cases list, with audit recording and no hard delete.
 - Case work creation for notes, tasks, and private document uploads by admins, lawyers, and assigned paralegals.
 - Note archival and task status transitions for authorized case-work users.
 - Short-lived signed document download route after server authorization and audit recording.
@@ -41,6 +43,8 @@ The implementation follows `AGENTS.md` as the authority for architecture, confid
 - Case-restricted rows require firm-wide role access or explicit case assignment.
 - Cross-firm access is denied by shared PostgreSQL helper functions.
 - No hard-delete grants are provided for core business tables. Case assignment edges can be deleted to revoke explicit access, with the removal retained in audit entries.
+- Case archival is restricted to admins through server code and a PostgreSQL status-transition trigger.
+- Schedule hiding keeps event/deadline rows and stores hidden metadata instead of deleting legal calendar data.
 - Audit logging is append-only through grants and avoids sensitive payloads.
 - Local Supabase Auth public signup is disabled globally; the email provider remains enabled so invited or seeded users can sign in.
 - Local TOTP MFA enrollment and verification are enabled as the implementation path for mandatory MFA.
@@ -62,17 +66,19 @@ pnpm db:reset
 pnpm test:db
 ```
 
-Fast tests passed with 6 files and 34 tests.
+Fast tests passed with 6 files and 38 tests.
 
-Database tests passed with 1 pgTAP file and 14 tests after running against the local Supabase CLI-managed PostgreSQL database.
+Database tests passed with 1 pgTAP file and 23 tests after running against the local Supabase CLI-managed PostgreSQL database.
 
-Playwright browser tests passed with 3 tests covering sign-in, case creation, case work, document upload/download surfaces, schedule entry creation, assignment add/remove, and read-only denial paths.
+Playwright browser tests passed with 4 tests covering sign-in, case creation, admin-only case archival, case work, document upload/download surfaces, schedule entry creation, dashboard schedule hiding, assignment add/remove, and read-only denial paths.
 
 The database test suite covers:
 
 - Same-firm positive access.
 - Cross-firm read denial.
 - Cross-firm insert denial.
+- Admin-only case archival through RPC and direct-update denial for lawyers.
+- Non-destructive event hiding and read-only denial for schedule hiding.
 - Case assignment access for paralegals.
 - Case assignment removal and revoked assigned-case visibility.
 - Read-only scheduling mutation denial.
@@ -88,6 +94,8 @@ Docker was initially unavailable in the WSL distro. After Docker was started and
 
 `pnpm db:reset` recreated the local database from migrations and seed data successfully.
 
+For manual demos, use `pnpm db:start` and `pnpm dev` so existing local demo data is preserved. Use `pnpm db:reset` only when intentionally returning the database to the checked-in synthetic seed state.
+
 `pnpm test:db` initially exposed two incorrect pgTAP assertion signatures. PostgreSQL was denying access correctly, but the test descriptions were placed in the expected-message argument. The assertions were corrected and the database test suite passed.
 
 The local Supabase stack may still be running. Stop it with:
@@ -98,7 +106,7 @@ pnpm db:stop
 
 ## Local Demo Accounts
 
-After `pnpm db:reset`, local Supabase contains these synthetic accounts. They are for local MVP testing only.
+The checked-in seed creates these synthetic accounts when the local database is initialized or intentionally reset. They are for local MVP testing only.
 
 | Email                    | Password         | Role      | Notes                                             |
 | ------------------------ | ---------------- | --------- | ------------------------------------------------- |

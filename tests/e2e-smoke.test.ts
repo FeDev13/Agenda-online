@@ -62,6 +62,24 @@ describe("route smoke checks", () => {
 
     expect(casesPage).toContain("/app/cases/${caseItem.id}");
     expect(casesPage).toContain("Ver causa");
+    expect(casesPage).toContain("archiveCaseAction");
+    expect(casesPage).toContain("Archivar causa");
+  });
+
+  it("exposes dashboard schedule hiding controls", () => {
+    const dashboardPage = readFileSync(
+      join(process.cwd(), "src/app/(authenticated)/app/page.tsx"),
+      "utf8"
+    );
+    const actions = readFileSync(
+      join(process.cwd(), "src/app/(authenticated)/app/actions.ts"),
+      "utf8"
+    );
+
+    expect(dashboardPage).toContain("Próxima agenda");
+    expect(dashboardPage).toContain("hideScheduleItemAction");
+    expect(dashboardPage).toContain("Ocultar");
+    expect(actions).toContain("hideScheduleItem");
   });
 
   it("exposes private document upload and signed download surfaces", () => {

@@ -22,8 +22,8 @@ export default async function CalendarPage() {
         <div>
           <h1>Agenda y vencimientos</h1>
           <p>
-            Los eventos usan fecha y hora con zona horaria. Los vencimientos legales se
-            guardan como fechas.
+            Los eventos usan fecha y hora con zona horaria. Las tareas con vencimiento
+            se muestran como fechas en la agenda.
           </p>
         </div>
       </div>

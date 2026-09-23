@@ -1,12 +1,14 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-const migration = readFileSync(
-  join(process.cwd(), "supabase/migrations/202608270001_initial_schema.sql"),
-  "utf8"
-);
+const migrationsPath = join(process.cwd(), "supabase/migrations");
+const migration = readdirSync(migrationsPath)
+  .filter((fileName) => fileName.endsWith(".sql"))
+  .sort()
+  .map((fileName) => readFileSync(join(migrationsPath, fileName), "utf8"))
+  .join("\n");
 
 const firmOwnedTables = [
   "firms",
@@ -81,6 +83,29 @@ describe("initial Supabase migration security posture", () => {
     expect(migration).toMatch(
       /create policy "authorized users can create document metadata"[\s\S]*public\.has_firm_role\(firm_id, array\['admin', 'lawyer', 'paralegal'\]/
     );
+  });
+
+  it("keeps case archival behind an admin-only database boundary", () => {
+    expect(migration).toContain("create or replace function public.archive_case");
+    expect(migration).toContain("public.enforce_case_archive_admin()");
+    expect(migration).toContain("new.status = 'archived'");
+    expect(migration).toContain("array['admin']::public.firm_role[]");
+    expect(migration).toContain("'case.archived'");
+    expect(migration).toContain("grant execute on function public.archive_case(uuid)");
+  });
+
+  it("keeps schedule hiding non-destructive and audited", () => {
+    expect(migration).toContain("add column if not exists hidden_at timestamptz");
+    expect(migration).toContain("create or replace function public.hide_schedule_item");
+    expect(migration).toContain("'event.hidden'");
+    expect(migration).toContain("'deadline.hidden'");
+    expect(migration).toContain(
+      "revoke all on function public.hide_schedule_item(text, uuid) from public"
+    );
+    expect(migration).toContain(
+      "grant execute on function public.hide_schedule_item(text, uuid) to authenticated"
+    );
+    expect(migration).not.toMatch(/delete\s+from\s+public\.(events|case_deadlines)/i);
   });
 
   it("configures the case document bucket as private", () => {

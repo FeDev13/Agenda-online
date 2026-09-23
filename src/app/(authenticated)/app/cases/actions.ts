@@ -1,7 +1,7 @@
 "use server";
 
-import { createCaseSchema } from "@/features/cases/validation";
-import { createCase } from "@/lib/server/cases";
+import { archiveCaseSchema, createCaseSchema } from "@/features/cases/validation";
+import { archiveCase, createCase } from "@/lib/server/cases";
 import { toUserMessage } from "@/lib/server/errors";
 
 export type CaseFormState = {
@@ -34,4 +34,16 @@ export async function createCaseAction(_state: CaseFormState, formData: FormData
   } catch (error) {
     return { message: toUserMessage(error), ok: false };
   }
+}
+
+export async function archiveCaseAction(formData: FormData) {
+  const parsed = archiveCaseSchema.safeParse({
+    caseId: formData.get("caseId")
+  });
+
+  if (!parsed.success) {
+    return;
+  }
+
+  await archiveCase(parsed.data);
 }

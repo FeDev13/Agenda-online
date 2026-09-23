@@ -2,8 +2,8 @@ import "server-only";
 
 import { revalidatePath } from "next/cache";
 
-import type { CreateCaseInput } from "@/features/cases/validation";
-import { canManageCases } from "@/lib/domain/authorization";
+import type { ArchiveCaseInput, CreateCaseInput } from "@/features/cases/validation";
+import { canArchiveCases, canManageCases } from "@/lib/domain/authorization";
 import { requireActiveMembership } from "@/lib/server/auth";
 import { UserFacingError } from "@/lib/server/errors";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -103,4 +103,27 @@ export async function createCase(input: CreateCaseInput) {
 
   revalidatePath("/app");
   revalidatePath("/app/cases");
+}
+
+export async function archiveCase(input: ArchiveCaseInput) {
+  const { membership } = await requireActiveMembership();
+
+  if (!canArchiveCases(membership.role)) {
+    throw new UserFacingError("Solo administración puede archivar causas.");
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("archive_case", {
+    p_case_id: input.caseId
+  });
+
+  if (error) {
+    throw new UserFacingError("No se pudo archivar la causa.");
+  }
+
+  revalidatePath("/app");
+  revalidatePath("/app/cases");
+  revalidatePath(`/app/cases/${input.caseId}`);
+  revalidatePath("/app/calendar");
+  revalidatePath("/app/team");
 }

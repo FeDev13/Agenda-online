@@ -254,6 +254,12 @@ button {
   justify-items: end;
 }
 
+.cardFooterAction {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
 .inlineForm {
   align-items: center;
   display: flex;
@@ -405,7 +411,8 @@ button {
   .topbar,
   .pageHeader,
   .cardHeader,
-  .actionRow {
+  .actionRow,
+  .cardFooterAction {
     align-items: stretch;
     flex-direction: column;
   }

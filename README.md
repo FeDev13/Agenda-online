@@ -24,10 +24,12 @@ Current implementation progress and verification results are recorded in [`docs/
 - Authenticated shell with dashboard, open cases, calendar/deadlines navigation, user identity, role display, and sign-out.
 - Open case listing and case creation through server-only services and PostgreSQL RPC.
 - Upcoming event/deadline listing.
+- Non-destructive dashboard hiding for upcoming agenda items.
 - Event creation using local wall-clock time plus IANA timezone, converted in PostgreSQL to `timestamptz`.
 - Legal deadline creation using PostgreSQL `date`, preserving date-only semantics.
 - Team access page for viewing firm members, assigning/removing case access, changing roles, deactivating members, and reviewing recent audit entries.
 - Case detail page for reviewing case context, notes, tasks, and private document metadata.
+- Admin-only case archival from the open-cases list, with audit recording and no hard delete.
 - Case work creation for notes, tasks, and private document uploads by admins, lawyers, and assigned paralegals.
 - Note archival and task status transitions for authorized case-work users.
 - Short-lived signed document download route after server authorization.
@@ -70,13 +72,24 @@ pnpm db:stop
 
 Local Supabase config lives in `supabase/config.toml`. Public signup is disabled globally in the local config; the email provider remains enabled so invited or seeded users can sign in. Users should be created through Supabase invite/admin flows, not public self-registration. TOTP MFA enrollment and verification are enabled locally as the implementation path for mandatory MFA.
 
+## Local Demo
+
+For a normal demo, preserve the current local database and start only the required services:
+
+```bash
+pnpm db:start
+pnpm dev
+```
+
+Use `pnpm db:reset` only when you intentionally want to wipe local data and recreate the database from migrations plus `supabase/seed.sql`.
+
 ## Migrations and Synthetic Seeds
 
 Migrations live in `supabase/migrations/`. The initial migration creates the core schema, helper functions, RPC mutations, RLS policies, explicit grants, an append-only audit-log foundation, and a private `case-documents` storage bucket.
 
 `supabase/seed.sql` contains synthetic reference setup only. It does not include real users, clients, cases, documents, credentials, exports, or personal data.
 
-After `pnpm db:reset`, the local database contains synthetic demo accounts:
+The seed creates these synthetic demo accounts when the local database is reset or initialized:
 
 | Email                    | Password         | Role      | Notes                                                       |
 | ------------------------ | ---------------- | --------- | ----------------------------------------------------------- |
@@ -112,9 +125,9 @@ Fast tests cover:
 - Case detail validation for notes, tasks, task status transitions, note archival, document metadata, and document upload metadata.
 - Static migration checks for RLS, no hard-delete grants, anonymous revocation, private storage policies, and cross-firm helper functions.
 - Supabase CLI config checks for invite-only auth defaults, private storage, CLI scripts, and TOTP MFA configuration.
-- Playwright browser coverage for sign-in, case creation, assignment add/remove, schedule entry creation, case work creation, document upload/download surfaces, and read-only denial paths.
+- Playwright browser coverage for sign-in, case creation, admin-only case archival, assignment add/remove, schedule entry creation, dashboard schedule hiding, case work creation, document upload/download surfaces, and read-only denial paths.
 
-Database tests under `supabase/tests/rls.sql` are pgTAP tests intended for `pnpm test:db` after the local Supabase stack is running. They exercise positive and negative RLS behavior, including cross-firm denial, case assignment, read-only mutation denial, case-work mutation denial, date-only deadlines, and timezone-retaining events.
+Database tests under `supabase/tests/rls.sql` are pgTAP tests intended for `pnpm test:db` after the local Supabase stack is running. They exercise positive and negative RLS behavior, including cross-firm denial, case assignment, admin-only case archival, non-destructive schedule hiding, read-only mutation denial, case-work mutation denial, date-only deadlines, and timezone-retaining events.
 
 ## Remote Supabase Setup
 
@@ -132,6 +145,7 @@ Database tests under `supabase/tests/rls.sql` are pgTAP tests intended for `pnpm
 - `admin` and `lawyer` roles have firm-wide case visibility.
 - `paralegal` and `read_only` require explicit case assignment for case-restricted records.
 - `read_only` can view assigned case records but cannot create notes, tasks, reminders, scheduling entries, document uploads, document metadata, or assignments.
+- Only `admin` can archive cases. Archived cases remain in PostgreSQL and are removed from open-case workflow lists.
 - Mutations are checked in server-only code and again by PostgreSQL RLS/RPC functions.
 - Cross-firm access is denied by helper functions used by policies.
 - Anonymous database access is explicitly revoked for the application schema.

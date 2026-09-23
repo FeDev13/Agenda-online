@@ -2,7 +2,7 @@ import "server-only";
 
 import { revalidatePath } from "next/cache";
 
-import type { CreateDeadlineInput, CreateEventInput } from "@/features/cases/validation";
+import type { CreateEventInput, HideScheduleItemInput } from "@/features/cases/validation";
 import { canManageScheduling } from "@/lib/domain/authorization";
 import { requireActiveMembership } from "@/lib/server/auth";
 import { UserFacingError } from "@/lib/server/errors";
@@ -13,7 +13,7 @@ export type ScheduleItem = {
   caseTitle: string;
   dateLabel: string;
   id: string;
-  kind: "deadline" | "event";
+  kind: "deadline" | "event" | "task";
   subtitle: string | null;
   title: string;
 };
@@ -27,11 +27,10 @@ type EventRow = {
   title: string;
 };
 
-type DeadlineRow = {
+type TaskRow = {
   case_id: string;
   due_on: string;
   id: string;
-  rule_source: string | null;
   title: string;
 };
 
@@ -61,33 +60,36 @@ export async function listUpcomingSchedule(): Promise<ScheduleItem[]> {
   const now = new Date();
   const today = getDateOnlyInTimeZone(now, defaultDisplayTimeZone);
 
-  const [eventsResult, deadlinesResult] = await Promise.all([
+  const [eventsResult, tasksResult] = await Promise.all([
     supabase
       .from("events")
       .select("id,case_id,title,starts_at,timezone,location")
       .eq("firm_id", membership.firmId)
+      .is("hidden_at", null)
       .gte("starts_at", now.toISOString())
       .order("starts_at", { ascending: true })
       .limit(20),
     supabase
-      .from("case_deadlines")
-      .select("id,case_id,title,due_on,rule_source")
+      .from("tasks")
+      .select("id,case_id,title,due_on")
       .eq("firm_id", membership.firmId)
+      .eq("status", "open")
+      .not("due_on", "is", null)
       .gte("due_on", today)
       .order("due_on", { ascending: true })
       .limit(20)
   ]);
 
-  if (eventsResult.error || deadlinesResult.error) {
+  if (eventsResult.error || tasksResult.error) {
     throw new UserFacingError("No se pudo cargar la agenda.");
   }
 
   const eventRows = (eventsResult.data ?? []) as EventRow[];
-  const deadlineRows = (deadlinesResult.data ?? []) as DeadlineRow[];
+  const taskRows = (tasksResult.data ?? []) as TaskRow[];
   const caseIds = [
     ...new Set([
       ...eventRows.map((row) => row.case_id),
-      ...deadlineRows.map((row) => row.case_id)
+      ...taskRows.map((row) => row.case_id)
     ])
   ];
 
@@ -124,20 +126,20 @@ export async function listUpcomingSchedule(): Promise<ScheduleItem[]> {
     sortKey: row.starts_at
   }));
 
-  const deadlines = deadlineRows.map((row) => ({
+  const tasks = taskRows.map((row) => ({
     item: {
       caseId: row.case_id,
       caseTitle: caseTitles.get(row.case_id) ?? "Causa",
       dateLabel: row.due_on,
       id: row.id,
-      kind: "deadline" as const,
-      subtitle: row.rule_source,
+      kind: "task" as const,
+      subtitle: "Tarea pendiente",
       title: row.title
     },
     sortKey: `${row.due_on}T00:00:00.000Z`
   }));
 
-  return [...events, ...deadlines]
+  return [...events, ...tasks]
     .sort((left, right) => left.sortKey.localeCompare(right.sortKey))
     .map(({ item }) => item);
 }
@@ -168,24 +170,21 @@ export async function createEvent(input: CreateEventInput) {
   revalidatePath("/app/calendar");
 }
 
-export async function createDeadline(input: CreateDeadlineInput) {
+export async function hideScheduleItem(input: HideScheduleItemInput) {
   const { membership } = await requireActiveMembership();
 
   if (!canManageScheduling(membership.role)) {
-    throw new UserFacingError("Tu rol no permite crear entradas de agenda.");
+    throw new UserFacingError("Tu rol no permite ocultar entradas de agenda.");
   }
 
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.rpc("create_legal_deadline", {
-    p_calculation_notes: input.calculationNotes,
-    p_case_id: input.caseId,
-    p_due_on: input.dueOn,
-    p_rule_source: input.ruleSource,
-    p_title: input.title
+  const { error } = await supabase.rpc("hide_schedule_item", {
+    p_item_id: input.id,
+    p_item_kind: input.kind
   });
 
   if (error) {
-    throw new UserFacingError("No se pudo crear el vencimiento.");
+    throw new UserFacingError("No se pudo ocultar el ítem de agenda.");
   }
 
   revalidatePath("/app");

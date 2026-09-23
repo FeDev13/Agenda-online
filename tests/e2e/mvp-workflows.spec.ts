@@ -15,7 +15,6 @@ test("creates case work, schedule entries, and document download links", async (
   const noteBody = `Nota sintetica E2E ${runId}`;
   const taskTitle = `Tarea sintetica E2E ${runId}`;
   const eventTitle = `Audiencia sintetica E2E ${runId}`;
-  const deadlineTitle = `Vencimiento sintetico E2E ${runId}`;
   const documentName = `documento-sintetico-${runId}.pdf`;
 
   await signIn(page, "admin@example.test");
@@ -50,6 +49,10 @@ test("creates case work, schedule entries, and document download links", async (
   await download;
 
   await page.goto("/app/calendar");
+  const taskCalendarCard = page.locator("li.card").filter({ hasText: taskTitle });
+  await expect(taskCalendarCard).toBeVisible();
+  await expect(taskCalendarCard.getByText("vencimiento: 2026-10-10")).toBeVisible();
+
   await page
     .locator("#event-case")
     .selectOption({ label: `${caseNumber} - ${caseTitle}` });
@@ -61,15 +64,11 @@ test("creates case work, schedule entries, and document download links", async (
   await expect(page.getByText("Evento creado.")).toBeVisible();
   await expect(page.getByText(eventTitle)).toBeVisible();
 
-  await page
-    .locator("#deadline-case")
-    .selectOption({ label: `${caseNumber} - ${caseTitle}` });
-  await page.locator("#deadline-title").fill(deadlineTitle);
-  await page.locator("#dueOn").fill("2026-10-20");
-  await page.locator("#ruleSource").fill("Carga manual E2E");
-  await page.getByRole("button", { name: "Crear vencimiento" }).click();
-  await expect(page.getByText("Vencimiento creado.")).toBeVisible();
-  await expect(page.getByText(deadlineTitle)).toBeVisible();
+  await page.goto("/app");
+  const scheduleCard = page.locator("li.card").filter({ hasText: eventTitle });
+  await expect(scheduleCard).toBeVisible();
+  await scheduleCard.getByRole("button", { name: "Ocultar" }).click();
+  await expect(page.locator("li.card").filter({ hasText: eventTitle })).toHaveCount(0);
 });
 
 test("assigns and removes restricted case access", async ({ page }) => {
@@ -106,6 +105,35 @@ test("assigns and removes restricted case access", async ({ page }) => {
   await signIn(page, "paralegal@example.test");
   await page.goto("/app/cases");
   await expect(page.locator("li.card").filter({ hasText: caseTitle })).toHaveCount(0);
+});
+
+test("archives open cases with admin-only controls", async ({ page }) => {
+  const runId = Date.now().toString(36);
+  const adminCaseNumber = `E2E-${runId}-004`;
+  const adminCaseTitle = `Archivo sintetico E2E ${runId}`;
+  const lawyerCaseNumber = `E2E-${runId}-005`;
+  const lawyerCaseTitle = `Sin archivo abogado E2E ${runId}`;
+
+  await signIn(page, "admin@example.test");
+  await createCase(page, {
+    caseNumber: adminCaseNumber,
+    caseTitle: adminCaseTitle
+  });
+  await archiveCase(page, adminCaseTitle);
+  await expect(page.locator("li.card").filter({ hasText: adminCaseTitle })).toHaveCount(
+    0
+  );
+
+  await signOut(page);
+  await signIn(page, "lawyer@example.test");
+  await createCase(page, {
+    caseNumber: lawyerCaseNumber,
+    caseTitle: lawyerCaseTitle
+  });
+  await expect(
+    page.locator("li.card").filter({ hasText: lawyerCaseTitle })
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Archivar causa" })).toHaveCount(0);
 });
 
 test("keeps read-only users out of case work mutations", async ({ page }) => {
@@ -198,4 +226,10 @@ async function openCase(page: Page, caseTitle: string) {
   const caseRow = page.locator("li.card").filter({ hasText: caseTitle });
   await caseRow.getByRole("link", { name: "Ver causa" }).click();
   await expect(page.getByRole("heading", { name: caseTitle })).toBeVisible();
+}
+
+async function archiveCase(page: Page, caseTitle: string) {
+  await page.goto("/app/cases");
+  const caseRow = page.locator("li.card").filter({ hasText: caseTitle });
+  await caseRow.getByRole("button", { name: "Archivar causa" }).click();
 }

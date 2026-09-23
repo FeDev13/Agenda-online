@@ -1,8 +1,8 @@
 "use server";
 
-import { createDeadlineSchema, createEventSchema } from "@/features/cases/validation";
+import { createEventSchema } from "@/features/cases/validation";
 import { toUserMessage } from "@/lib/server/errors";
-import { createDeadline, createEvent } from "@/lib/server/scheduling";
+import { createEvent } from "@/lib/server/scheduling";
 
 export type ScheduleFormState = {
   message: string | null;
@@ -30,33 +30,6 @@ export async function createEventAction(_state: ScheduleFormState, formData: For
   try {
     await createEvent(parsed.data);
     return { message: "Evento creado.", ok: true };
-  } catch (error) {
-    return { message: toUserMessage(error), ok: false };
-  }
-}
-
-export async function createDeadlineAction(
-  _state: ScheduleFormState,
-  formData: FormData
-) {
-  const parsed = createDeadlineSchema.safeParse({
-    calculationNotes: formData.get("calculationNotes"),
-    caseId: formData.get("caseId"),
-    dueOn: formData.get("dueOn"),
-    ruleSource: formData.get("ruleSource"),
-    title: formData.get("title")
-  });
-
-  if (!parsed.success) {
-    return {
-      message: parsed.error.issues[0]?.message ?? "Revisá los datos del vencimiento.",
-      ok: false
-    };
-  }
-
-  try {
-    await createDeadline(parsed.data);
-    return { message: "Vencimiento creado.", ok: true };
   } catch (error) {
     return { message: toUserMessage(error), ok: false };
   }

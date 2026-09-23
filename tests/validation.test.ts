@@ -1,29 +1,29 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  archiveCaseSchema,
   archiveNoteSchema,
-  createDeadlineSchema,
   createDocumentMetadataSchema,
   createDocumentUploadSchema,
   createEventSchema,
   createNoteSchema,
   createTaskSchema,
   dateOnlySchema,
+  hideScheduleItemSchema,
   updateTaskStatusSchema
 } from "@/features/cases/validation";
 
 describe("case and scheduling validation", () => {
-  it("accepts legal deadlines as date-only values", () => {
-    const parsed = createDeadlineSchema.parse({
-      calculationNotes: "",
+  it("accepts task due dates as date-only values", () => {
+    const parsed = createTaskSchema.parse({
+      assignedTo: "",
       caseId: "10000000-0000-4000-8000-000000000001",
       dueOn: "2026-09-15",
-      ruleSource: "Revision manual de orden judicial",
       title: "Contestar traslado"
     });
 
     expect(parsed.dueOn).toBe("2026-09-15");
-    expect(parsed.calculationNotes).toBeNull();
+    expect(parsed.assignedTo).toBeNull();
   });
 
   it("rejects impossible date-only values", () => {
@@ -153,6 +153,12 @@ describe("case and scheduling validation", () => {
 
   it("validates note archival and task status transitions", () => {
     expect(
+      archiveCaseSchema.parse({
+        caseId: "10000000-0000-4000-8000-000000000001"
+      }).caseId
+    ).toBe("10000000-0000-4000-8000-000000000001");
+
+    expect(
       archiveNoteSchema.parse({
         caseId: "10000000-0000-4000-8000-000000000001",
         noteId: "10000000-0000-4000-8000-000000000501"
@@ -172,6 +178,22 @@ describe("case and scheduling validation", () => {
         caseId: "10000000-0000-4000-8000-000000000001",
         status: "deleted",
         taskId: "10000000-0000-4000-8000-000000000601"
+      }).success
+    ).toBe(false);
+  });
+
+  it("validates hidden schedule item requests", () => {
+    expect(
+      hideScheduleItemSchema.parse({
+        id: "10000000-0000-4000-8000-000000000301",
+        kind: "event"
+      }).kind
+    ).toBe("event");
+
+    expect(
+      hideScheduleItemSchema.safeParse({
+        id: "10000000-0000-4000-8000-000000000401",
+        kind: "task"
       }).success
     ).toBe(false);
   });
