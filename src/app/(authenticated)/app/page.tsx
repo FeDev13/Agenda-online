@@ -1,7 +1,7 @@
 import Link from "next/link";
 
+import { ScheduleBadge } from "@/components/schedule-badge";
 import { canManageCases, canManageScheduling } from "@/lib/domain/authorization";
-import { formatScheduleKind } from "@/lib/display-labels";
 import { getCurrentUser } from "@/lib/server/auth";
 import { listOpenCases } from "@/lib/server/cases";
 import { listUpcomingSchedule } from "@/lib/server/scheduling";
@@ -86,9 +86,11 @@ export default async function DashboardPage() {
                       </p>
                     </div>
                     <div className="stackedActions">
-                      <span className="badge">
-                        {formatScheduleKind(item.kind)}: {item.dateLabel}
-                      </span>
+                      <ScheduleBadge
+                        dateLabel={item.dateLabel}
+                        deadlineProximity={item.deadlineProximity}
+                        kind={item.kind}
+                      />
                       {canHideSchedule && item.kind !== "task" ? (
                         <form action={hideScheduleItemAction}>
                           <input name="id" type="hidden" value={item.id} />

@@ -363,69 +363,6 @@ set
   role = excluded.role,
   assigned_by = excluded.assigned_by;
 
-insert into public.events (
-  id,
-  firm_id,
-  case_id,
-  title,
-  starts_at,
-  ends_at,
-  timezone,
-  location,
-  created_by
-)
-values (
-  '10000000-0000-4000-8000-000000000301',
-  '10000000-0000-4000-8000-000000000001',
-  '10000000-0000-4000-8000-000000000111',
-  'Reunion sintetica con cliente',
-  '2026-09-15 10:00:00 America/Argentina/Buenos_Aires'::timestamptz,
-  '2026-09-15 11:00:00 America/Argentina/Buenos_Aires'::timestamptz,
-  'America/Argentina/Buenos_Aires',
-  'Sala de reuniones',
-  '10000000-0000-4000-8000-000000000010'
-)
-on conflict (id) do update
-set
-  title = excluded.title,
-  starts_at = excluded.starts_at,
-  ends_at = excluded.ends_at,
-  timezone = excluded.timezone,
-  location = excluded.location,
-  updated_at = now();
-
-insert into public.case_deadlines (
-  id,
-  firm_id,
-  case_id,
-  title,
-  due_on,
-  rule_source,
-  calculation_notes,
-  confirmed_by,
-  confirmed_at,
-  created_by
-)
-values (
-  '10000000-0000-4000-8000-000000000401',
-  '10000000-0000-4000-8000-000000000001',
-  '10000000-0000-4000-8000-000000000112',
-  'Vencimiento sintetico de presentacion',
-  '2026-09-20',
-  'Revision manual de orden judicial',
-  'Vencimiento sintetico cargado manualmente; sin calculo legal automatizado.',
-  '10000000-0000-4000-8000-000000000011',
-  now(),
-  '10000000-0000-4000-8000-000000000011'
-)
-on conflict (id) do update
-set
-  title = excluded.title,
-  due_on = excluded.due_on,
-  rule_source = excluded.rule_source,
-  calculation_notes = excluded.calculation_notes,
-  updated_at = now();
-
 insert into public.notes (id, firm_id, case_id, body, created_by)
 values (
   '10000000-0000-4000-8000-000000000501',
@@ -437,31 +374,6 @@ values (
 on conflict (id) do update
 set
   body = excluded.body,
-  updated_at = now();
-
-insert into public.tasks (
-  id,
-  firm_id,
-  case_id,
-  title,
-  due_on,
-  assigned_to,
-  created_by
-)
-values (
-  '10000000-0000-4000-8000-000000000601',
-  '10000000-0000-4000-8000-000000000001',
-  '10000000-0000-4000-8000-000000000111',
-  'Preparar legajo sintetico para audiencia',
-  '2026-09-10',
-  '10000000-0000-4000-8000-000000000012',
-  '10000000-0000-4000-8000-000000000010'
-)
-on conflict (id) do update
-set
-  title = excluded.title,
-  due_on = excluded.due_on,
-  assigned_to = excluded.assigned_to,
   updated_at = now();
 
 insert into public.documents (

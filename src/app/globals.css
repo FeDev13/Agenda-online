@@ -102,8 +102,12 @@ button {
 }
 
 .navList a {
+  align-items: center;
   border-radius: 6px;
   color: #eef7fa;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
   padding: 10px 12px;
 }
 
@@ -277,6 +281,56 @@ button {
   font-weight: 700;
   padding: 4px 9px;
   white-space: nowrap;
+}
+
+.deadlineBadge {
+  border: 1px solid transparent;
+}
+
+.deadlineBadgeNormal {
+  background: #e5f5e9;
+  border-color: #9bd2aa;
+  color: #1d6b37;
+}
+
+.deadlineBadgeSoon {
+  background: #fff3c7;
+  border-color: #e3bd4f;
+  color: #795500;
+}
+
+.deadlineBadgeUrgent {
+  background: #fde1df;
+  border-color: #d98c89;
+  color: var(--danger);
+}
+
+.navAlertIcon {
+  align-items: center;
+  background: #c92f2f;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 999px;
+  color: #ffffff;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+  font-weight: 700;
+  height: 18px;
+  justify-content: center;
+  line-height: 1;
+  width: 18px;
+}
+
+.srOnly {
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
 }
 
 .formGrid {

@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { formatFirmRole } from "@/lib/display-labels";
 import { requireUser } from "@/lib/server/auth";
+import { hasImminentScheduleDeadline } from "@/lib/server/scheduling";
 
 import { signOutAction } from "./actions";
 
@@ -10,6 +11,9 @@ export default async function AuthenticatedLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const user = await requireUser();
   const label = user.displayName ?? user.email;
+  const showAgendaWarning = user.membership
+    ? await hasImminentScheduleDeadline(user.membership)
+    : false;
 
   return (
     <div className="appShell">
@@ -21,7 +25,21 @@ export default async function AuthenticatedLayout({
         <nav aria-label="Navegación principal" className="navList">
           <Link href="/app">Inicio</Link>
           <Link href="/app/cases">Causas abiertas</Link>
-          <Link href="/app/calendar">Agenda</Link>
+          <Link href="/app/calendar">
+            <span>Agenda</span>
+            {showAgendaWarning ? (
+              <>
+                <span
+                  aria-hidden="true"
+                  className="navAlertIcon"
+                  title="Vencimiento dentro de 48 horas"
+                >
+                  !
+                </span>
+                <span className="srOnly">Hay vencimientos dentro de 48 horas</span>
+              </>
+            ) : null}
+          </Link>
           <Link href="/app/team">Accesos</Link>
         </nav>
       </aside>

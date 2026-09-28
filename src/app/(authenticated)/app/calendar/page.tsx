@@ -1,5 +1,5 @@
+import { ScheduleBadge } from "@/components/schedule-badge";
 import { canManageScheduling } from "@/lib/domain/authorization";
-import { formatScheduleKind } from "@/lib/display-labels";
 import { getCurrentUser } from "@/lib/server/auth";
 import { listOpenCases } from "@/lib/server/cases";
 import { listUpcomingSchedule } from "@/lib/server/scheduling";
@@ -22,8 +22,8 @@ export default async function CalendarPage() {
         <div>
           <h1>Agenda y vencimientos</h1>
           <p>
-            Los eventos usan fecha y hora con zona horaria. Las tareas con vencimiento
-            se muestran como fechas en la agenda.
+            Los eventos usan fecha y hora con zona horaria. Las tareas con vencimiento se
+            muestran como fechas en la agenda.
           </p>
         </div>
       </div>
@@ -42,9 +42,11 @@ export default async function CalendarPage() {
                         {item.subtitle ? ` · ${item.subtitle}` : ""}
                       </p>
                     </div>
-                    <span className="badge">
-                      {formatScheduleKind(item.kind)}: {item.dateLabel}
-                    </span>
+                    <ScheduleBadge
+                      dateLabel={item.dateLabel}
+                      deadlineProximity={item.deadlineProximity}
+                      kind={item.kind}
+                    />
                   </div>
                 </li>
               ))}
