@@ -24,7 +24,38 @@ describe("route smoke checks", () => {
     expect(layout).toContain("/app/cases");
     expect(layout).toContain("/app/calendar");
     expect(layout).toContain("/app/team");
+    expect(layout).toContain("requireMfaVerified");
     expect(layout).toContain("signOutAction");
+  });
+
+  it("exposes MFA enrollment and verification gates", () => {
+    const auth = readFileSync(join(process.cwd(), "src/lib/server/auth.ts"), "utf8");
+    const enrollPage = readFileSync(
+      join(process.cwd(), "src/app/(auth)/mfa/enroll/page.tsx"),
+      "utf8"
+    );
+    const enrollActions = readFileSync(
+      join(process.cwd(), "src/app/(auth)/mfa/enroll/actions.ts"),
+      "utf8"
+    );
+    const verifyPage = readFileSync(
+      join(process.cwd(), "src/app/(auth)/mfa/verify/page.tsx"),
+      "utf8"
+    );
+    const verifyActions = readFileSync(
+      join(process.cwd(), "src/app/(auth)/mfa/verify/actions.ts"),
+      "utf8"
+    );
+
+    expect(auth).toContain("getAuthenticatorAssuranceLevel");
+    expect(auth).toContain("listFactors");
+    expect(auth).toContain("requireMfaVerified");
+    expect(auth).toContain('next === "/app" || next.startsWith("/app/")');
+    expect(enrollPage).toContain("MfaEnrollForm");
+    expect(enrollActions).toContain('factorType: "totp"');
+    expect(enrollActions).toContain("challengeAndVerify");
+    expect(verifyPage).toContain("MfaVerifyForm");
+    expect(verifyActions).toContain("challengeAndVerify");
   });
 
   it("exposes team lifecycle, assignment removal, and audit controls", () => {

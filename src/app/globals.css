@@ -448,6 +448,28 @@ button {
   padding: 20px;
 }
 
+.mfaQrBlock {
+  align-items: center;
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+}
+
+.mfaQrBlock code {
+  background: var(--panel-subtle);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--brand-strong);
+  padding: 8px 10px;
+}
+
+.mfaQrImage {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  height: 220px;
+  width: 220px;
+}
+
 @media (max-width: 820px) {
   .appShell {
     grid-template-columns: 1fr;

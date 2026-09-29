@@ -1,17 +1,31 @@
 import "server-only";
 
 import { redirect } from "next/navigation";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { ActiveMembership } from "@/lib/domain/authorization";
 import { isActiveMembership } from "@/lib/domain/authorization";
 import { UserFacingError } from "@/lib/server/errors";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { Database } from "@/types/database";
 
 export type AppUser = {
   id: string;
   displayName: string | null;
   email: string;
   membership: ActiveMembership | null;
+  mfaRequired: boolean;
+};
+
+export type MfaStatus = {
+  currentLevel: string | null;
+  mfaRequired: boolean;
+  needsEnrollment: boolean;
+  needsVerification: boolean;
+  verifiedTotpFactors: Array<{
+    friendly_name?: string;
+    id: string;
+  }>;
 };
 
 export async function getCurrentUser(): Promise<AppUser | null> {
@@ -28,7 +42,7 @@ export async function getCurrentUser(): Promise<AppUser | null> {
   const [{ data: profile }, { data: memberships }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("display_name,email")
+      .select("display_name,email,mfa_required")
       .eq("id", user.id)
       .maybeSingle(),
     supabase
@@ -54,7 +68,8 @@ export async function getCurrentUser(): Promise<AppUser | null> {
     id: user.id,
     displayName: profile?.display_name ?? null,
     email: profile?.email ?? user.email ?? "Usuario no identificado",
-    membership
+    membership,
+    mfaRequired: profile?.mfa_required ?? true
   };
 }
 
@@ -78,4 +93,83 @@ export async function requireActiveMembership() {
   }
 
   return { membership: user.membership, user };
+}
+
+export async function getMfaStatus(
+  user: Pick<AppUser, "mfaRequired">,
+  supabase?: SupabaseClient<Database>
+): Promise<MfaStatus> {
+  if (!user.mfaRequired) {
+    return {
+      currentLevel: null,
+      mfaRequired: false,
+      needsEnrollment: false,
+      needsVerification: false,
+      verifiedTotpFactors: []
+    };
+  }
+
+  const client = supabase ?? (await createSupabaseServerClient());
+  const [assuranceResult, factorsResult] = await Promise.all([
+    client.auth.mfa.getAuthenticatorAssuranceLevel(),
+    client.auth.mfa.listFactors()
+  ]);
+
+  if (assuranceResult.error || factorsResult.error) {
+    throw new UserFacingError("No se pudo validar el segundo factor.");
+  }
+
+  const verifiedTotpFactors = (factorsResult.data?.totp ?? []).map((factor) => ({
+    friendly_name: factor.friendly_name,
+    id: factor.id
+  }));
+  const currentLevel = assuranceResult.data?.currentLevel ?? null;
+  const needsEnrollment = verifiedTotpFactors.length === 0;
+  const needsVerification = !needsEnrollment && currentLevel !== "aal2";
+
+  return {
+    currentLevel,
+    mfaRequired: true,
+    needsEnrollment,
+    needsVerification,
+    verifiedTotpFactors
+  };
+}
+
+export function sanitizeProtectedNextPath(next: string | string[] | null | undefined) {
+  if (typeof next !== "string") {
+    return "/app";
+  }
+
+  return next === "/app" || next.startsWith("/app/") ? next : "/app";
+}
+
+export function getMfaRedirectPath(status: MfaStatus, next: string) {
+  if (!status.mfaRequired) {
+    return null;
+  }
+
+  const safeNext = encodeURIComponent(sanitizeProtectedNextPath(next));
+
+  if (status.needsEnrollment) {
+    return `/mfa/enroll?next=${safeNext}`;
+  }
+
+  if (status.needsVerification) {
+    return `/mfa/verify?next=${safeNext}`;
+  }
+
+  return null;
+}
+
+export async function requireMfaVerified(next = "/app") {
+  const user = await requireUser();
+  const status = await getMfaStatus(user);
+  const redirectPath = getMfaRedirectPath(status, next);
+
+  if (redirectPath) {
+    redirect(redirectPath);
+  }
+
+  return user;
 }

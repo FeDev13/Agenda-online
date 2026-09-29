@@ -1,10 +1,24 @@
 import { expect, test, type Page } from "@playwright/test";
+import { createClient } from "@supabase/supabase-js";
+import { createHmac } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
 
 const demoPassword = "Agenda-demo-1!";
+const demoProfileIds = [
+  "10000000-0000-4000-8000-000000000010",
+  "10000000-0000-4000-8000-000000000011",
+  "10000000-0000-4000-8000-000000000012",
+  "10000000-0000-4000-8000-000000000013"
+];
 const paralegalProfileId = "10000000-0000-4000-8000-000000000012";
 const readerProfileId = "10000000-0000-4000-8000-000000000013";
+const mfaSecrets = new Map<string, string>();
 
 test.describe.configure({ mode: "serial" });
+
+test.beforeAll(async () => {
+  await resetDemoMfaFactors();
+});
 
 test("creates case work, schedule entries, and document download links", async ({
   page
@@ -57,8 +71,8 @@ test("creates case work, schedule entries, and document download links", async (
     .locator("#event-case")
     .selectOption({ label: `${caseNumber} - ${caseTitle}` });
   await page.locator("#event-title").fill(eventTitle);
-  await page.locator("#startsAtLocal").fill("2026-10-12T10:00");
-  await page.locator("#endsAtLocal").fill("2026-10-12T11:00");
+  await page.locator("#startsAtLocal").fill("2026-09-30T10:00");
+  await page.locator("#endsAtLocal").fill("2026-09-30T11:00");
   await page.locator("#location").fill("Sala de audiencias 1");
   await page.getByRole("button", { name: "Crear evento" }).click();
   await expect(page.getByText("Evento creado.")).toBeVisible();
@@ -171,7 +185,147 @@ async function signIn(page: Page, email: string) {
   await page.getByLabel("Correo electronico").fill(email);
   await page.getByLabel("Contraseña").fill(demoPassword);
   await page.getByRole("button", { name: "Ingresar" }).click();
+  await completeMfaIfNeeded(page, email);
   await expect(page).toHaveURL(/\/app$/);
+}
+
+async function completeMfaIfNeeded(page: Page, email: string) {
+  await page.waitForURL(/\/(app|mfa\/enroll|mfa\/verify)/);
+  await page.goto("/app");
+  await page.waitForURL(/\/(app|mfa\/enroll|mfa\/verify)/);
+
+  if (page.url().includes("/mfa/enroll")) {
+    await page.getByRole("button", { name: "Generar segundo factor" }).click();
+    const secret = (await page.locator(".mfaQrBlock code").textContent())?.trim();
+
+    if (!secret) {
+      throw new Error(`Missing MFA enrollment secret for ${email}`);
+    }
+
+    mfaSecrets.set(email, secret);
+    await page.getByLabel("Código de autenticación").fill(generateTotp(secret));
+    await page.getByRole("button", { name: "Verificar" }).click();
+    await page.waitForURL(/\/app$/);
+    return;
+  }
+
+  if (page.url().includes("/mfa/verify")) {
+    const secret = mfaSecrets.get(email);
+
+    if (!secret) {
+      throw new Error(`Missing stored MFA secret for ${email}`);
+    }
+
+    await page.getByLabel("Código de autenticación").fill(generateTotp(secret));
+    await page.getByRole("button", { name: "Verificar" }).click();
+    await page.waitForURL(/\/app$/);
+  }
+}
+
+function generateTotp(secret: string) {
+  const key = decodeBase32(secret);
+  const counter = Buffer.alloc(8);
+  counter.writeBigUInt64BE(BigInt(Math.floor(Date.now() / 30_000)));
+
+  const digest = createHmac("sha1", key).update(counter).digest();
+  const offset = readByte(digest, digest.length - 1) & 0x0f;
+  const binary =
+    ((readByte(digest, offset) & 0x7f) << 24) |
+    ((readByte(digest, offset + 1) & 0xff) << 16) |
+    ((readByte(digest, offset + 2) & 0xff) << 8) |
+    (readByte(digest, offset + 3) & 0xff);
+
+  return String(binary % 1_000_000).padStart(6, "0");
+}
+
+function readByte(buffer: Buffer, index: number) {
+  const value = buffer[index];
+
+  if (value === undefined) {
+    throw new Error("Invalid TOTP digest.");
+  }
+
+  return value;
+}
+
+function decodeBase32(secret: string) {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  const bytes: number[] = [];
+  let bits = 0;
+  let value = 0;
+
+  for (const char of secret.replaceAll(/\s/g, "").replaceAll("=", "").toUpperCase()) {
+    const index = alphabet.indexOf(char);
+
+    if (index === -1) {
+      throw new Error("Invalid TOTP secret.");
+    }
+
+    value = (value << 5) | index;
+    bits += 5;
+
+    if (bits >= 8) {
+      bytes.push((value >>> (bits - 8)) & 0xff);
+      bits -= 8;
+    }
+  }
+
+  return Buffer.from(bytes);
+}
+
+async function resetDemoMfaFactors() {
+  const env = readTestEnv();
+
+  if (!env.NEXT_PUBLIC_SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
+    return;
+  }
+
+  const supabase = createClient(
+    env.NEXT_PUBLIC_SUPABASE_URL,
+    env.SUPABASE_SERVICE_ROLE_KEY,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  );
+
+  for (const userId of demoProfileIds) {
+    const { data, error } = await supabase.auth.admin.mfa.listFactors({ userId });
+
+    if (error) {
+      throw error;
+    }
+
+    for (const factor of data?.factors ?? []) {
+      const { error: deleteError } = await supabase.auth.admin.mfa.deleteFactor({
+        id: factor.id,
+        userId
+      });
+
+      if (deleteError) {
+        throw deleteError;
+      }
+    }
+  }
+}
+
+function readTestEnv() {
+  const env = { ...process.env };
+
+  if (existsSync(".env.local")) {
+    for (const line of readFileSync(".env.local", "utf8").split(/\r?\n/)) {
+      if (!line || line.startsWith("#") || !line.includes("=")) {
+        continue;
+      }
+
+      const separatorIndex = line.indexOf("=");
+      env[line.slice(0, separatorIndex)] ??= line.slice(separatorIndex + 1);
+    }
+  }
+
+  return env;
 }
 
 async function signOut(page: Page) {

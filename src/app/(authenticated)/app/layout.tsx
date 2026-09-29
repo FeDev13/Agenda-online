@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { formatFirmRole } from "@/lib/display-labels";
-import { requireUser } from "@/lib/server/auth";
+import { requireMfaVerified } from "@/lib/server/auth";
 import { hasImminentScheduleDeadline } from "@/lib/server/scheduling";
 
 import { signOutAction } from "./actions";
@@ -9,7 +9,7 @@ import { signOutAction } from "./actions";
 export default async function AuthenticatedLayout({
   children
 }: Readonly<{ children: React.ReactNode }>) {
-  const user = await requireUser();
+  const user = await requireMfaVerified("/app");
   const label = user.displayName ?? user.email;
   const showAgendaWarning = user.membership
     ? await hasImminentScheduleDeadline(user.membership)
