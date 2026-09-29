@@ -5,6 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { ActiveMembership } from "@/lib/domain/authorization";
 import { isActiveMembership } from "@/lib/domain/authorization";
+import { sanitizeProtectedNextPath } from "@/lib/routes";
 import { UserFacingError } from "@/lib/server/errors";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database";
@@ -134,14 +135,6 @@ export async function getMfaStatus(
     needsVerification,
     verifiedTotpFactors
   };
-}
-
-export function sanitizeProtectedNextPath(next: string | string[] | null | undefined) {
-  if (typeof next !== "string") {
-    return "/app";
-  }
-
-  return next === "/app" || next.startsWith("/app/") ? next : "/app";
 }
 
 export function getMfaRedirectPath(status: MfaStatus, next: string) {

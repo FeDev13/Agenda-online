@@ -30,6 +30,11 @@ describe("route smoke checks", () => {
 
   it("exposes MFA enrollment and verification gates", () => {
     const auth = readFileSync(join(process.cwd(), "src/lib/server/auth.ts"), "utf8");
+    const routes = readFileSync(join(process.cwd(), "src/lib/routes.ts"), "utf8");
+    const signInPage = readFileSync(
+      join(process.cwd(), "src/app/(auth)/sign-in/page.tsx"),
+      "utf8"
+    );
     const enrollPage = readFileSync(
       join(process.cwd(), "src/app/(auth)/mfa/enroll/page.tsx"),
       "utf8"
@@ -50,7 +55,8 @@ describe("route smoke checks", () => {
     expect(auth).toContain("getAuthenticatorAssuranceLevel");
     expect(auth).toContain("listFactors");
     expect(auth).toContain("requireMfaVerified");
-    expect(auth).toContain('next === "/app" || next.startsWith("/app/")');
+    expect(routes).toContain('path === "/app" || path.startsWith("/app/")');
+    expect(signInPage).toContain("sanitizeProtectedNextPath");
     expect(enrollPage).toContain("MfaEnrollForm");
     expect(enrollActions).toContain('factorType: "totp"');
     expect(enrollActions).toContain("challengeAndVerify");

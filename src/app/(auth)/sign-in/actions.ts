@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 
+import { sanitizeProtectedNextPath } from "@/lib/routes";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type SignInState = {
@@ -11,7 +12,7 @@ export type SignInState = {
 export async function signInAction(_state: SignInState, formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  const next = String(formData.get("next") ?? "/app");
+  const next = sanitizeProtectedNextPath(String(formData.get("next") ?? "/app"));
 
   if (!email || !password) {
     return { message: "Ingresá tu email y contraseña." };
@@ -24,5 +25,5 @@ export async function signInAction(_state: SignInState, formData: FormData) {
     return { message: "No se pudo ingresar. Revisá tu invitación y credenciales." };
   }
 
-  redirect(next.startsWith("/app") ? next : "/app");
+  redirect(next);
 }

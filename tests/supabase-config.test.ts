@@ -27,4 +27,9 @@ describe("Supabase local project configuration", () => {
     expect(config).toMatch(/\[auth\.mfa\.totp\][\s\S]*enroll_enabled = true/);
     expect(config).toMatch(/\[auth\.mfa\.totp\][\s\S]*verify_enabled = true/);
   });
+
+  it("bounds authenticated sessions", () => {
+    expect(config).toMatch(/\[auth\.sessions\][\s\S]*timebox = "12h"/);
+    expect(config).toMatch(/\[auth\.sessions\][\s\S]*inactivity_timeout = "2h"/);
+  });
 });

@@ -1,12 +1,14 @@
+import { sanitizeProtectedNextPath } from "@/lib/routes";
+
 import { SignInForm } from "./sign-in-form";
 
 export default async function SignInPage({
   searchParams
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string | string[] }>;
 }) {
   const params = await searchParams;
-  const next = params.next?.startsWith("/app") ? params.next : "/app";
+  const next = sanitizeProtectedNextPath(params.next);
 
   return (
     <main className="authPage">

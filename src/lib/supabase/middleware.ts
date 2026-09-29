@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { getPublicEnv } from "@/lib/env";
+import { isProtectedAppPath } from "@/lib/routes";
 import type { Database } from "@/types/database";
 
 export async function updateSession(request: NextRequest) {
@@ -31,8 +32,8 @@ export async function updateSession(request: NextRequest) {
     data: { user }
   } = await supabase.auth.getUser();
 
-  const isProtectedPath = request.nextUrl.pathname.startsWith("/app");
-  const isAuthPath = request.nextUrl.pathname.startsWith("/sign-in");
+  const isProtectedPath = isProtectedAppPath(request.nextUrl.pathname);
+  const isAuthPath = request.nextUrl.pathname === "/sign-in";
 
   if (isProtectedPath && !user) {
     const redirectUrl = request.nextUrl.clone();

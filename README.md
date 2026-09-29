@@ -79,7 +79,7 @@ pnpm test:db
 pnpm db:stop
 ```
 
-Local Supabase config lives in `supabase/config.toml`. Public signup is disabled globally in the local config; the email provider remains enabled so invited or seeded users can sign in. Users should be created through Supabase invite/admin flows, not public self-registration. TOTP MFA enrollment and verification are enabled locally as the implementation path for mandatory MFA.
+Local Supabase config lives in `supabase/config.toml`. Public signup is disabled globally in the local config; the email provider remains enabled so invited or seeded users can sign in. Users should be created through Supabase invite/admin flows, not public self-registration. TOTP MFA enrollment and verification are enabled locally as the implementation path for mandatory MFA. Local sessions are bounded by a 12-hour absolute timebox and a 2-hour inactivity timeout.
 
 ## Deadline Email Alerts
 
@@ -165,8 +165,9 @@ Database tests under `supabase/tests/rls.sql` are pgTAP tests intended for `pnpm
 3. Apply migrations from `supabase/migrations/` using the Supabase CLI or approved release process.
 4. Disable public signup in the remote Auth settings. Use administrator invites only.
 5. Require MFA with Supabase Auth TOTP or managed organizational SSO before granting access to real firm data.
-6. Keep the `case-documents` bucket private. Object names are expected to use `firm_id/case_id/file-name`.
-7. Store production secrets in the deployment platform and Supabase settings, never in Git.
+6. Configure session expiration in hosted Supabase Auth: 12-hour timebox and 2-hour inactivity timeout unless an approved firm policy requires stricter values.
+7. Keep the `case-documents` bucket private. Object names are expected to use `firm_id/case_id/file-name`.
+8. Store production secrets in the deployment platform and Supabase settings, never in Git.
 
 ## Security Model
 

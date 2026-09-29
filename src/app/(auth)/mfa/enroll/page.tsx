@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
-import { getMfaStatus, requireUser, sanitizeProtectedNextPath } from "@/lib/server/auth";
+import { sanitizeProtectedNextPath } from "@/lib/routes";
+import { getMfaStatus, requireUser } from "@/lib/server/auth";
 
 import { MfaEnrollForm } from "./mfa-enroll-form";
 

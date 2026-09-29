@@ -2,7 +2,8 @@
 
 import { redirect } from "next/navigation";
 
-import { requireUser, sanitizeProtectedNextPath } from "@/lib/server/auth";
+import { sanitizeProtectedNextPath } from "@/lib/routes";
+import { requireUser } from "@/lib/server/auth";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type MfaEnrollState = {
