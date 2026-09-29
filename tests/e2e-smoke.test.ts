@@ -9,10 +9,15 @@ describe("route smoke checks", () => {
       join(process.cwd(), "src/app/(auth)/sign-in/page.tsx"),
       "utf8"
     );
+    const signInActions = readFileSync(
+      join(process.cwd(), "src/app/(auth)/sign-in/actions.ts"),
+      "utf8"
+    );
 
     expect(signInPage.replace(/\s+/g, " ")).toContain(
       "El registro público está deshabilitado."
     );
+    expect(signInActions).toContain("accept_pending_firm_invitations");
   });
 
   it("has protected shell navigation for the vertical slice", () => {
@@ -73,10 +78,15 @@ describe("route smoke checks", () => {
       join(process.cwd(), "src/app/(authenticated)/app/team/actions.ts"),
       "utf8"
     );
+    const teamServer = readFileSync(join(process.cwd(), "src/lib/server/team.ts"), "utf8");
 
     expect(teamPage).toContain("Integrantes del estudio");
+    expect(teamPage).toContain("Invitar integrante");
     expect(teamPage).toContain("Remover acceso");
     expect(teamPage).toContain("Auditoría reciente");
+    expect(teamActions).toContain("inviteFirmMemberAction");
+    expect(teamServer).toContain("inviteUserByEmail");
+    expect(teamServer).toContain("membership.invited");
     expect(teamActions).toContain("deactivateFirmMemberAction");
     expect(teamActions).toContain("removeCaseAssignmentAction");
     expect(teamActions).toContain("updateFirmMemberRoleAction");

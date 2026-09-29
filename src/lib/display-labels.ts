@@ -41,7 +41,10 @@ const auditActionLabels: Record<string, string> = {
   "document.download_prepared": "Descarga de documento preparada",
   "document.uploaded": "Documento subido",
   "event.created": "Evento creado",
+  "membership.accepted": "Invitación aceptada",
   "membership.disabled": "Integrante desactivado",
+  "membership.invited": "Integrante invitado",
+  "membership.reinvited": "Integrante reinvitado",
   "membership.role_updated": "Rol de integrante actualizado",
   "note.archived": "Nota archivada",
   "task.status_updated": "Estado de tarea actualizado"

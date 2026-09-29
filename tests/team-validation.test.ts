@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   assignCaseMemberSchema,
   deactivateFirmMemberSchema,
+  inviteFirmMemberSchema,
   removeCaseAssignmentSchema,
   updateFirmMemberRoleSchema
 } from "@/features/team/validation";
@@ -52,6 +53,36 @@ describe("team access validation", () => {
         profileId: "10000000-0000-4000-8000-000000000002"
       }).profileId
     ).toBe("10000000-0000-4000-8000-000000000002");
+  });
+
+  it("validates invite requests", () => {
+    expect(
+      inviteFirmMemberSchema.parse({
+        displayName: "  Nueva Persona  ",
+        email: "NEW.USER@EXAMPLE.TEST",
+        role: "read_only"
+      })
+    ).toMatchObject({
+      displayName: "Nueva Persona",
+      email: "new.user@example.test",
+      role: "read_only"
+    });
+
+    expect(
+      inviteFirmMemberSchema.safeParse({
+        displayName: "",
+        email: "invalid",
+        role: "admin"
+      }).success
+    ).toBe(false);
+
+    expect(
+      inviteFirmMemberSchema.safeParse({
+        displayName: "",
+        email: "new.user@example.test",
+        role: "owner"
+      }).success
+    ).toBe(false);
   });
 
   it("requires admins or lawyers for case assignment management", () => {

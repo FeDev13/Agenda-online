@@ -392,6 +392,10 @@ export type Database = {
         };
         Returns: void;
       };
+      accept_pending_firm_invitations: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
       create_case_event: {
         Args: {
           p_case_id: string;

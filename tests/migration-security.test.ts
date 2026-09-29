@@ -95,6 +95,22 @@ describe("initial Supabase migration security posture", () => {
     expect(migration).toContain("grant execute on function public.archive_case(uuid)");
   });
 
+  it("lets authenticated invited users accept their own firm invitations", () => {
+    expect(migration).toContain(
+      "create or replace function public.accept_pending_firm_invitations()"
+    );
+    expect(migration).toContain("where profile_id = auth.uid()");
+    expect(migration).toContain("and status = 'invited'");
+    expect(migration).toContain("status = 'active'");
+    expect(migration).toContain("'membership.accepted'");
+    expect(migration).toContain(
+      "revoke all on function public.accept_pending_firm_invitations() from public"
+    );
+    expect(migration).toContain(
+      "grant execute on function public.accept_pending_firm_invitations() to authenticated"
+    );
+  });
+
   it("keeps schedule hiding non-destructive and audited", () => {
     expect(migration).toContain("add column if not exists hidden_at timestamptz");
     expect(migration).toContain("create or replace function public.hide_schedule_item");

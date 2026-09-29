@@ -13,7 +13,7 @@ Internal case scheduling foundation for a law firm. The app is built with Next.j
 - `tests/` contains fast domain, validation, route, config, and migration security tests.
 - `docs/` records architecture decisions and assumptions.
 
-PostgreSQL is the source of truth. Browser state and `localStorage` are not authoritative storage. Runtime app code uses Supabase publishable credentials only; the service-role key is not required by the Next.js application and must stay server-only for future administrative tooling.
+PostgreSQL is the source of truth. Browser state and `localStorage` are not authoritative storage. Browser-facing runtime code uses Supabase publishable credentials only. The service-role key is used only by server-only admin and scheduled-job code, and must never be exposed to the browser.
 
 Current implementation progress and verification results are recorded in [`docs/milestone-001-progress.md`](docs/milestone-001-progress.md).
 
@@ -27,7 +27,7 @@ Current implementation progress and verification results are recorded in [`docs/
 - Non-destructive dashboard hiding for upcoming agenda items.
 - Event creation using local wall-clock time plus IANA timezone, converted in PostgreSQL to `timestamptz`.
 - Legal deadline creation using PostgreSQL `date`, preserving date-only semantics.
-- Team access page for viewing firm members, assigning/removing case access, changing roles, deactivating members, and reviewing recent audit entries.
+- Team access page for inviting firm members, viewing membership status, assigning/removing case access, changing roles, deactivating members, and reviewing recent audit entries.
 - Case detail page for reviewing case context, notes, tasks, and private document metadata.
 - Admin-only case archival from the open-cases list, with audit recording and no hard delete.
 - Case work creation for notes, tasks, and private document uploads by admins, lawyers, and assigned paralegals.
@@ -55,7 +55,7 @@ Set at least:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
-For local Supabase, `pnpm db:start` prints the API URL and anon/publishable key. Put those values in `.env.local`. Keep `SUPABASE_SERVICE_ROLE_KEY` server-only and out of browser-exposed variables.
+For local Supabase, `pnpm db:start` prints the API URL and anon/publishable key. Put those values in `.env.local`. Keep `SUPABASE_SERVICE_ROLE_KEY` server-only and out of browser-exposed variables. It is required for administrator invite actions and scheduled server jobs.
 
 Deadline email alerts also require server-only values:
 

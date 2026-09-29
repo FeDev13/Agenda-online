@@ -23,6 +23,7 @@ import {
   removeCaseAssignmentAction,
   updateFirmMemberRoleAction
 } from "./actions";
+import { InviteMemberForm } from "./invite-member-form";
 
 const roleOptions: FirmRole[] = ["admin", "lawyer", "paralegal", "read_only"];
 
@@ -51,6 +52,18 @@ export default async function TeamPage() {
           <p>Integrantes activos y asignaciones para acceso restringido a causas.</p>
         </div>
       </div>
+
+      <section
+        aria-labelledby="invite-member-title"
+        className="panel"
+        style={{ marginBottom: 18 }}
+      >
+        <h2 id="invite-member-title">Invitar integrante</h2>
+        {!canManageMembers ? (
+          <p className="errorText">Solo administración puede invitar integrantes.</p>
+        ) : null}
+        <InviteMemberForm canInvite={canManageMembers} />
+      </section>
 
       <div className="grid two">
         <section className="panel" aria-labelledby="team-members-title">

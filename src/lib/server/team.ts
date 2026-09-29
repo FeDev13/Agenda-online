@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import type {
   AssignCaseMemberInput,
   DeactivateFirmMemberInput,
+  InviteFirmMemberInput,
   RemoveCaseAssignmentInput,
   UpdateFirmMemberRoleInput
 } from "@/features/team/validation";
@@ -14,6 +15,7 @@ import {
 } from "@/lib/domain/authorization";
 import { requireActiveMembership } from "@/lib/server/auth";
 import { UserFacingError } from "@/lib/server/errors";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { FirmRole, Json, MembershipStatus } from "@/types/database";
 
@@ -49,6 +51,7 @@ export type AuditEntrySummary = {
 };
 
 type MembershipRow = {
+  firm_id?: string;
   id: string;
   profile_id: string;
   role: FirmRole;
@@ -244,6 +247,58 @@ export async function listRecentAuditEntries(limit = 20): Promise<AuditEntrySumm
       targetTable: row.target_table
     };
   });
+}
+
+export async function inviteFirmMember(input: InviteFirmMemberInput) {
+  const { membership, user } = await requireActiveMembership();
+
+  if (!canManageFirmMemberships(membership.role)) {
+    throw new UserFacingError("Solo administración puede invitar integrantes.");
+  }
+
+  const admin = createInviteAdminClient();
+  const existingProfile = await findProfileByEmail(input.email);
+  const profileId = existingProfile?.id ?? (await inviteAuthUser(input));
+
+  if (input.displayName && !existingProfile?.display_name) {
+    await admin
+      .from("profiles")
+      .update({ display_name: input.displayName })
+      .eq("id", profileId);
+  }
+
+  const { data: existingMembership, error: membershipLookupError } = await admin
+    .from("firm_memberships")
+    .select("id,profile_id,role,status")
+    .eq("firm_id", membership.firmId)
+    .eq("profile_id", profileId)
+    .maybeSingle();
+
+  if (membershipLookupError) {
+    throw new UserFacingError("No se pudo preparar la invitación.");
+  }
+
+  if (existingMembership?.status === "active" || existingMembership?.status === "invited") {
+    throw new UserFacingError("Ese email ya tiene una invitación o membresía en el estudio.");
+  }
+
+  const targetMembership = existingMembership
+    ? await reinviteDisabledMember(existingMembership.id, input.role, user.id)
+    : await createInvitedMembership(membership.firmId, profileId, input.role, user.id);
+
+  await appendAuditLog(
+    membership.firmId,
+    user.id,
+    existingMembership ? "membership.reinvited" : "membership.invited",
+    "firm_memberships",
+    targetMembership.id,
+    {
+      new_role: input.role,
+      previous_role: existingMembership?.role ?? null,
+      profile_id: profileId
+    }
+  );
+  revalidateTeamSurfaces();
 }
 
 export async function assignCaseMember(input: AssignCaseMemberInput) {
@@ -492,6 +547,124 @@ export async function deactivateFirmMember(input: DeactivateFirmMemberInput) {
     }
   );
   revalidateTeamSurfaces();
+}
+
+function createInviteAdminClient() {
+  try {
+    return createSupabaseAdminClient();
+  } catch {
+    throw new UserFacingError(
+      "Las invitaciones no están configuradas en el servidor."
+    );
+  }
+}
+
+async function findProfileByEmail(email: string) {
+  const admin = createInviteAdminClient();
+  const { data, error } = await admin
+    .from("profiles")
+    .select("id,display_name,email")
+    .eq("email", email)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    throw new UserFacingError("No se pudo preparar la invitación.");
+  }
+
+  return data as ProfileRow | null;
+}
+
+async function inviteAuthUser(input: InviteFirmMemberInput) {
+  const admin = createInviteAdminClient();
+  const redirectTo = getInviteRedirectUrl();
+  const { data, error } = await admin.auth.admin.inviteUserByEmail(input.email, {
+    data: input.displayName ? { display_name: input.displayName } : undefined,
+    ...(redirectTo ? { redirectTo } : {})
+  });
+
+  if (error || !data.user) {
+    throw new UserFacingError("No se pudo enviar la invitación.");
+  }
+
+  const { error: profileError } = await admin.from("profiles").upsert(
+    {
+      display_name: input.displayName,
+      email: input.email,
+      id: data.user.id
+    },
+    { onConflict: "id" }
+  );
+
+  if (profileError) {
+    throw new UserFacingError("No se pudo preparar el perfil invitado.");
+  }
+
+  return data.user.id;
+}
+
+async function createInvitedMembership(
+  firmId: string,
+  profileId: string,
+  role: FirmRole,
+  invitedBy: string
+) {
+  const admin = createInviteAdminClient();
+  const { data, error } = await admin
+    .from("firm_memberships")
+    .insert({
+      firm_id: firmId,
+      invited_by: invitedBy,
+      profile_id: profileId,
+      role,
+      status: "invited"
+    })
+    .select("id,profile_id,role,status")
+    .single();
+
+  if (error || !data) {
+    throw new UserFacingError("No se pudo registrar la invitación.");
+  }
+
+  return data as MembershipRow;
+}
+
+async function reinviteDisabledMember(
+  membershipId: string,
+  role: FirmRole,
+  invitedBy: string
+) {
+  const admin = createInviteAdminClient();
+  const { data, error } = await admin
+    .from("firm_memberships")
+    .update({
+      accepted_at: null,
+      invited_by: invitedBy,
+      role,
+      status: "invited"
+    })
+    .eq("id", membershipId)
+    .eq("status", "disabled")
+    .select("id,profile_id,role,status")
+    .single();
+
+  if (error || !data) {
+    throw new UserFacingError("No se pudo reactivar la invitación.");
+  }
+
+  return data as MembershipRow;
+}
+
+function getInviteRedirectUrl() {
+  if (!process.env.APP_BASE_URL) {
+    return undefined;
+  }
+
+  try {
+    return new URL("/app", process.env.APP_BASE_URL).toString();
+  } catch {
+    return undefined;
+  }
 }
 
 async function ensureAnotherActiveAdmin(firmId: string, excludedProfileId: string) {

@@ -25,5 +25,12 @@ export async function signInAction(_state: SignInState, formData: FormData) {
     return { message: "No se pudo ingresar. Revisá tu invitación y credenciales." };
   }
 
+  const { error: inviteError } = await supabase.rpc("accept_pending_firm_invitations");
+
+  if (inviteError) {
+    await supabase.auth.signOut();
+    return { message: "No se pudo validar tu invitación. Intentá nuevamente." };
+  }
+
   redirect(next);
 }
