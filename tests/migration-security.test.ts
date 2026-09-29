@@ -21,6 +21,7 @@ const firmOwnedTables = [
   "case_deadlines",
   "tasks",
   "reminders",
+  "notification_deliveries",
   "notes",
   "documents",
   "audit_log"
@@ -106,6 +107,17 @@ describe("initial Supabase migration security posture", () => {
       "grant execute on function public.hide_schedule_item(text, uuid) to authenticated"
     );
     expect(migration).not.toMatch(/delete\s+from\s+public\.(events|case_deadlines)/i);
+  });
+
+  it("stores email alert deliveries behind service-only access", () => {
+    expect(migration).toContain("create table public.notification_deliveries");
+    expect(migration).toContain("unique (\n    recipient_profile_id,");
+    expect(migration).toContain(
+      "grant select, insert, update on public.notification_deliveries to service_role;"
+    );
+    expect(migration).not.toContain(
+      "grant select, insert, update on public.notification_deliveries to authenticated;"
+    );
   });
 
   it("configures the case document bucket as private", () => {

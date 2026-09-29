@@ -57,6 +57,15 @@ Set at least:
 
 For local Supabase, `pnpm db:start` prints the API URL and anon/publishable key. Put those values in `.env.local`. Keep `SUPABASE_SERVICE_ROLE_KEY` server-only and out of browser-exposed variables.
 
+Deadline email alerts also require server-only values:
+
+- `SUPABASE_SERVICE_ROLE_KEY` for the scheduled server job.
+- `APP_BASE_URL` for sign-in links, such as `https://agenda.example.com`.
+- `RESEND_API_KEY` from the Resend dashboard.
+- `RESEND_FROM_EMAIL`, using a verified Resend sending domain before production.
+- `RESEND_REPLY_TO_EMAIL`, optional but recommended.
+- `DEADLINE_ALERT_CRON_SECRET`, at least 24 random characters.
+
 ## Docker and Local Supabase
 
 This project uses only Supabase CLI-managed containers for local PostgreSQL, Auth, Storage, Studio, and related services. The Next.js app runs directly on the host with `pnpm dev`; there is no custom Docker Compose stack for the web app.
@@ -71,6 +80,26 @@ pnpm db:stop
 ```
 
 Local Supabase config lives in `supabase/config.toml`. Public signup is disabled globally in the local config; the email provider remains enabled so invited or seeded users can sign in. Users should be created through Supabase invite/admin flows, not public self-registration. TOTP MFA enrollment and verification are enabled locally as the implementation path for mandatory MFA.
+
+## Deadline Email Alerts
+
+Deadline alerts are sent through Resend from a server-only cron endpoint:
+
+```text
+POST /api/cron/deadline-alerts
+Authorization: Bearer $DEADLINE_ALERT_CRON_SECRET
+```
+
+The job checks legal deadlines and open task due dates for the 7-day, 48-hour, and 24-hour windows. Delivery attempts are recorded in `notification_deliveries` so repeated cron runs do not send duplicate emails for the same recipient, item, and alert window.
+
+Emails deliberately avoid case titles, client names, note bodies, document names, and other confidential matter details. Recipients are told that a deadline is approaching and must sign in to review details.
+
+For hosted Supabase, schedule the endpoint with Supabase Cron or the deployment platform's scheduler. A daily morning schedule in the firm's timezone is enough for date-only legal deadlines; an hourly schedule is also safe because delivery records are idempotent. Use `?dryRun=1` to count candidates without sending email:
+
+```text
+POST /api/cron/deadline-alerts?dryRun=1
+Authorization: Bearer $DEADLINE_ALERT_CRON_SECRET
+```
 
 ## Local Demo
 

@@ -82,6 +82,21 @@ describe("route smoke checks", () => {
     expect(actions).toContain("hideScheduleItem");
   });
 
+  it("exposes the protected deadline email cron route", () => {
+    const route = readFileSync(
+      join(process.cwd(), "src/app/api/cron/deadline-alerts/route.ts"),
+      "utf8"
+    );
+    const env = readFileSync(join(process.cwd(), "src/lib/env.ts"), "utf8");
+    const exampleEnv = readFileSync(join(process.cwd(), ".env.example"), "utf8");
+
+    expect(route).toContain("export async function POST");
+    expect(route).toContain("DEADLINE_ALERT_CRON_SECRET");
+    expect(route).toContain("runDeadlineAlertJob");
+    expect(env).toContain("RESEND_API_KEY");
+    expect(exampleEnv).toContain("RESEND_FROM_EMAIL");
+  });
+
   it("exposes private document upload and signed download surfaces", () => {
     const forms = readFileSync(
       join(

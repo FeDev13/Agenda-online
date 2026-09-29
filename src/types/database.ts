@@ -6,6 +6,10 @@ export type MembershipStatus = "invited" | "active" | "disabled";
 export type CaseStatus = "open" | "closed" | "archived";
 export type TaskStatus = "open" | "completed" | "archived";
 export type ReminderChannel = "in_app" | "email";
+export type NotificationAlertWindow =
+  "seven_day" | "forty_eight_hour" | "twenty_four_hour";
+export type NotificationDeliveryStatus = "pending" | "sent" | "failed" | "skipped";
+export type NotificationScheduleItemKind = "deadline" | "task";
 
 export type Database = {
   public: {
@@ -285,6 +289,47 @@ export type Database = {
           updated_by?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["notes"]["Insert"]>;
+        Relationships: [];
+      };
+      notification_deliveries: {
+        Row: {
+          alert_window: NotificationAlertWindow;
+          attempt_count: number;
+          case_id: string;
+          channel: ReminderChannel;
+          created_at: string;
+          firm_id: string;
+          id: string;
+          last_error: string | null;
+          provider: "resend";
+          provider_message_id: string | null;
+          recipient_email: string;
+          recipient_profile_id: string;
+          schedule_item_id: string;
+          schedule_item_kind: NotificationScheduleItemKind;
+          sent_at: string | null;
+          status: NotificationDeliveryStatus;
+          updated_at: string;
+        };
+        Insert: {
+          alert_window: NotificationAlertWindow;
+          attempt_count?: number;
+          case_id: string;
+          channel?: ReminderChannel;
+          firm_id: string;
+          last_error?: string | null;
+          provider?: "resend";
+          provider_message_id?: string | null;
+          recipient_email: string;
+          recipient_profile_id: string;
+          schedule_item_id: string;
+          schedule_item_kind: NotificationScheduleItemKind;
+          sent_at?: string | null;
+          status?: NotificationDeliveryStatus;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["notification_deliveries"]["Insert"]
+        >;
         Relationships: [];
       };
       reminders: {
