@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 
 import { signInAction, type SignInState } from "./actions";
@@ -34,6 +35,9 @@ export function SignInForm({ next }: { next: string }) {
       <button className="button" disabled={pending} type="submit">
         {pending ? "Ingresando..." : "Ingresar"}
       </button>
+      <Link className="secondaryLink" href="/reset-password">
+        Recuperar acceso
+      </Link>
     </form>
   );
 }

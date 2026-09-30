@@ -406,6 +406,12 @@ button {
   padding: 6px 10px;
 }
 
+.secondaryLink {
+  color: var(--brand-strong);
+  font-weight: 700;
+  text-align: center;
+}
+
 .errorText {
   color: var(--danger);
   font-weight: 700;

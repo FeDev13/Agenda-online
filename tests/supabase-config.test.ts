@@ -19,6 +19,8 @@ describe("Supabase local project configuration", () => {
     expect(packageJson.scripts?.["test:db"]).toBe("supabase test db supabase/tests");
     expect(config).toMatch(/\[auth\][\s\S]*enable_signup = false/);
     expect(config).toMatch(/\[auth\.email\][\s\S]*enable_signup = true/);
+    expect(config).toContain("http://localhost:3000/auth/callback/reset-password");
+    expect(config).toContain("http://127.0.0.1:3000/auth/callback/reset-password");
   });
 
   it("keeps document storage private and exposes the TOTP MFA path", () => {

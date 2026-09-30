@@ -20,6 +20,42 @@ describe("route smoke checks", () => {
     expect(signInActions).toContain("accept_pending_firm_invitations");
   });
 
+  it("exposes generic password recovery routes", () => {
+    const signInForm = readFileSync(
+      join(process.cwd(), "src/app/(auth)/sign-in/sign-in-form.tsx"),
+      "utf8"
+    );
+    const resetPage = readFileSync(
+      join(process.cwd(), "src/app/(auth)/reset-password/page.tsx"),
+      "utf8"
+    );
+    const resetActions = readFileSync(
+      join(process.cwd(), "src/app/(auth)/reset-password/actions.ts"),
+      "utf8"
+    );
+    const callbackRoute = readFileSync(
+      join(process.cwd(), "src/app/(auth)/auth/callback/reset-password/route.ts"),
+      "utf8"
+    );
+    const updatePage = readFileSync(
+      join(process.cwd(), "src/app/(auth)/reset-password/update/page.tsx"),
+      "utf8"
+    );
+    const updateActions = readFileSync(
+      join(process.cwd(), "src/app/(auth)/reset-password/update/actions.ts"),
+      "utf8"
+    );
+
+    expect(signInForm).toContain("/reset-password");
+    expect(resetPage).toContain("ResetPasswordForm");
+    expect(resetActions).toContain("resetPasswordForEmail");
+    expect(resetActions).toContain("Si el email corresponde");
+    expect(callbackRoute).toContain("exchangeCodeForSession");
+    expect(updatePage).toContain("UpdatePasswordForm");
+    expect(updateActions).toContain("updateUser");
+    expect(updateActions).toContain("signOut");
+  });
+
   it("has protected shell navigation for the vertical slice", () => {
     const layout = readFileSync(
       join(process.cwd(), "src/app/(authenticated)/app/layout.tsx"),
