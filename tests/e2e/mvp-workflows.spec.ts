@@ -71,8 +71,8 @@ test("creates case work, schedule entries, and document download links", async (
     .locator("#event-case")
     .selectOption({ label: `${caseNumber} - ${caseTitle}` });
   await page.locator("#event-title").fill(eventTitle);
-  await page.locator("#startsAtLocal").fill("2026-09-30T10:00");
-  await page.locator("#endsAtLocal").fill("2026-09-30T11:00");
+  await page.locator("#startsAtLocal").fill("2026-10-02T10:00");
+  await page.locator("#endsAtLocal").fill("2026-10-02T11:00");
   await page.locator("#location").fill("Sala de audiencias 1");
   await page.getByRole("button", { name: "Crear evento" }).click();
   await expect(page.getByText("Evento creado.")).toBeVisible();

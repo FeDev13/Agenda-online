@@ -209,6 +209,12 @@ export const archiveNoteSchema = z.object({
   noteId: z.string().uuid("Seleccioná una nota.")
 });
 
+export const updateNoteSchema = z.object({
+  body: z.string().trim().min(1, "El texto de la nota es obligatorio.").max(4000),
+  caseId: z.string().uuid("Seleccioná una causa."),
+  noteId: z.string().uuid("Seleccioná una nota.")
+});
+
 export const updateTaskStatusSchema = z.object({
   caseId: z.string().uuid("Seleccioná una causa."),
   status: z.enum(["open", "completed", "archived"]),
@@ -224,4 +230,5 @@ export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 export type HideScheduleItemInput = z.infer<typeof hideScheduleItemSchema>;
 export type ArchiveNoteInput = z.infer<typeof archiveNoteSchema>;
 export type ArchiveCaseInput = z.infer<typeof archiveCaseSchema>;
+export type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
 export type UpdateTaskStatusInput = z.infer<typeof updateTaskStatusSchema>;

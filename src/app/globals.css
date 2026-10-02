@@ -244,6 +244,10 @@ button {
   justify-content: space-between;
 }
 
+.noteBody {
+  white-space: pre-wrap;
+}
+
 .actionRow {
   align-items: center;
   display: flex;

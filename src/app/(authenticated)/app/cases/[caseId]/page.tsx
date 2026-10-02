@@ -12,7 +12,8 @@ import {
 } from "@/lib/server/case-detail";
 
 import { CaseWorkForms } from "./case-work-forms";
-import { archiveNoteAction, updateTaskStatusAction } from "./actions";
+import { CaseNoteItem } from "./case-note-item";
+import { updateTaskStatusAction } from "./actions";
 
 export default async function CaseDetailPage({
   params
@@ -33,6 +34,8 @@ export default async function CaseDetailPage({
     listAssignableCaseMembers(caseId)
   ]);
   const canManage = canManageCaseWork(user.membership.role);
+  const canManageAnyNote =
+    user.membership.role === "admin" || user.membership.role === "lawyer";
 
   return (
     <>
@@ -78,25 +81,19 @@ export default async function CaseDetailPage({
           <h2 id="notes-title">Notas</h2>
           {notes.length ? (
             <ul className="caseList">
-              {notes.map((note) => (
-                <li className="card" key={note.id}>
-                  <p>{note.body}</p>
-                  <div className="actionRow">
-                    <p className="muted">
-                      {note.createdByName} · {new Date(note.createdAt).toLocaleString()}
-                    </p>
-                    {canManage ? (
-                      <form action={archiveNoteAction}>
-                        <input name="caseId" type="hidden" value={caseId} />
-                        <input name="noteId" type="hidden" value={note.id} />
-                        <button className="secondaryButton compactButton" type="submit">
-                          Archivar
-                        </button>
-                      </form>
-                    ) : null}
-                  </div>
-                </li>
-              ))}
+              {notes.map((note) => {
+                const canManageNote =
+                  canManage && (canManageAnyNote || note.createdById === user.id);
+
+                return (
+                  <CaseNoteItem
+                    canManage={canManageNote}
+                    caseId={caseId}
+                    key={`${note.id}:${note.updatedAt}`}
+                    note={note}
+                  />
+                );
+              })}
             </ul>
           ) : (
             <p className="emptyState">No hay notas visibles para esta causa.</p>

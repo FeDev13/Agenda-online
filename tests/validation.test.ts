@@ -10,6 +10,7 @@ import {
   createTaskSchema,
   dateOnlySchema,
   hideScheduleItemSchema,
+  updateNoteSchema,
   updateTaskStatusSchema
 } from "@/features/cases/validation";
 
@@ -164,6 +165,14 @@ describe("case and scheduling validation", () => {
         noteId: "10000000-0000-4000-8000-000000000501"
       }).noteId
     ).toBe("10000000-0000-4000-8000-000000000501");
+
+    expect(
+      updateNoteSchema.parse({
+        body: " Texto actualizado de nota ",
+        caseId: "10000000-0000-4000-8000-000000000001",
+        noteId: "10000000-0000-4000-8000-000000000501"
+      }).body
+    ).toBe("Texto actualizado de nota");
 
     expect(
       updateTaskStatusSchema.parse({

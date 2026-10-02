@@ -5,6 +5,7 @@ import {
   deactivateFirmMemberSchema,
   inviteFirmMemberSchema,
   removeCaseAssignmentSchema,
+  resetFirmMemberMfaSchema,
   updateFirmMemberRoleSchema
 } from "@/features/team/validation";
 import {
@@ -50,6 +51,12 @@ describe("team access validation", () => {
 
     expect(
       deactivateFirmMemberSchema.parse({
+        profileId: "10000000-0000-4000-8000-000000000002"
+      }).profileId
+    ).toBe("10000000-0000-4000-8000-000000000002");
+
+    expect(
+      resetFirmMemberMfaSchema.parse({
         profileId: "10000000-0000-4000-8000-000000000002"
       }).profileId
     ).toBe("10000000-0000-4000-8000-000000000002");

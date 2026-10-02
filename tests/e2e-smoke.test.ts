@@ -20,6 +20,35 @@ describe("route smoke checks", () => {
     expect(signInActions).toContain("accept_pending_firm_invitations");
   });
 
+  it("exposes audited firm bootstrap without public self-registration", () => {
+    const bootstrapPage = readFileSync(
+      join(process.cwd(), "src/app/(auth)/bootstrap/page.tsx"),
+      "utf8"
+    );
+    const bootstrapForm = readFileSync(
+      join(process.cwd(), "src/app/(auth)/bootstrap/bootstrap-form.tsx"),
+      "utf8"
+    );
+    const bootstrapActions = readFileSync(
+      join(process.cwd(), "src/app/(auth)/bootstrap/actions.ts"),
+      "utf8"
+    );
+    const bootstrapServer = readFileSync(
+      join(process.cwd(), "src/lib/server/bootstrap.ts"),
+      "utf8"
+    );
+
+    expect(bootstrapPage).toContain("BootstrapForm");
+    expect(bootstrapForm).toContain("bootstrapToken");
+    expect(bootstrapActions).toContain("bootstrapFirmSchema");
+    expect(bootstrapServer).toContain("FIRM_BOOTSTRAP_TOKEN");
+    expect(bootstrapServer).toContain("inviteUserByEmail");
+    expect(bootstrapServer).toContain("firm.bootstrapped");
+    expect(bootstrapServer).toContain("membership.bootstrap_invited");
+    expect(bootstrapServer).toContain("actor_profile_id: null");
+    expect(bootstrapServer).not.toContain("signUp");
+  });
+
   it("exposes generic password recovery routes", () => {
     const signInForm = readFileSync(
       join(process.cwd(), "src/app/(auth)/sign-in/sign-in-form.tsx"),
@@ -118,10 +147,15 @@ describe("route smoke checks", () => {
 
     expect(teamPage).toContain("Integrantes del estudio");
     expect(teamPage).toContain("Invitar integrante");
+    expect(teamPage).toContain("Restablecer MFA");
     expect(teamPage).toContain("Remover acceso");
     expect(teamPage).toContain("Auditoría reciente");
     expect(teamActions).toContain("inviteFirmMemberAction");
+    expect(teamActions).toContain("resetFirmMemberMfaAction");
     expect(teamServer).toContain("inviteUserByEmail");
+    expect(teamServer).toContain("deleteFactor");
+    expect(teamServer).toContain("membership.mfa_reset");
+    expect(teamServer).toContain("removed_mfa_factor_count");
     expect(teamServer).toContain("membership.invited");
     expect(teamActions).toContain("deactivateFirmMemberAction");
     expect(teamActions).toContain("removeCaseAssignmentAction");
@@ -208,10 +242,30 @@ describe("route smoke checks", () => {
       join(process.cwd(), "src/app/(authenticated)/app/cases/[caseId]/page.tsx"),
       "utf8"
     );
+    const noteItem = readFileSync(
+      join(
+        process.cwd(),
+        "src/app/(authenticated)/app/cases/[caseId]/case-note-item.tsx"
+      ),
+      "utf8"
+    );
+    const actions = readFileSync(
+      join(process.cwd(), "src/app/(authenticated)/app/cases/[caseId]/actions.ts"),
+      "utf8"
+    );
+    const caseDetailServer = readFileSync(
+      join(process.cwd(), "src/lib/server/case-detail.ts"),
+      "utf8"
+    );
 
-    expect(casePage).toContain("archiveNoteAction");
+    expect(casePage).toContain("CaseNoteItem");
+    expect(noteItem).toContain("archiveNoteAction");
+    expect(noteItem).toContain("updateNoteAction");
+    expect(actions).toContain("updateNoteSchema");
+    expect(caseDetailServer).toContain("note.updated");
     expect(casePage).toContain("updateTaskStatusAction");
-    expect(casePage).toContain("Archivar");
+    expect(noteItem).toContain("Editar");
+    expect(noteItem).toContain("Archivar");
     expect(casePage).toContain("Completar");
   });
 });

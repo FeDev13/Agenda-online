@@ -41,12 +41,16 @@ const auditActionLabels: Record<string, string> = {
   "document.download_prepared": "Descarga de documento preparada",
   "document.uploaded": "Documento subido",
   "event.created": "Evento creado",
+  "firm.bootstrapped": "Estudio inicializado",
   "membership.accepted": "Invitación aceptada",
+  "membership.bootstrap_invited": "Administración inicial invitada",
   "membership.disabled": "Integrante desactivado",
   "membership.invited": "Integrante invitado",
+  "membership.mfa_reset": "MFA restablecido",
   "membership.reinvited": "Integrante reinvitado",
   "membership.role_updated": "Rol de integrante actualizado",
   "note.archived": "Nota archivada",
+  "note.updated": "Nota actualizada",
   "task.status_updated": "Estado de tarea actualizado"
 };
 

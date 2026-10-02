@@ -5,6 +5,7 @@ import {
   deactivateFirmMemberSchema,
   inviteFirmMemberSchema,
   removeCaseAssignmentSchema,
+  resetFirmMemberMfaSchema,
   updateFirmMemberRoleSchema
 } from "@/features/team/validation";
 import { toUserMessage } from "@/lib/server/errors";
@@ -13,6 +14,7 @@ import {
   deactivateFirmMember,
   inviteFirmMember,
   removeCaseAssignment,
+  resetFirmMemberMfa,
   updateFirmMemberRole
 } from "@/lib/server/team";
 
@@ -112,4 +114,16 @@ export async function deactivateFirmMemberAction(formData: FormData) {
   }
 
   await deactivateFirmMember(parsed.data);
+}
+
+export async function resetFirmMemberMfaAction(formData: FormData) {
+  const parsed = resetFirmMemberMfaSchema.safeParse({
+    profileId: formData.get("profileId")
+  });
+
+  if (!parsed.success) {
+    return;
+  }
+
+  await resetFirmMemberMfa(parsed.data);
 }

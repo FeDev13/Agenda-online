@@ -164,11 +164,18 @@ Database tests under `supabase/tests/rls.sql` are pgTAP tests intended for `pnpm
 2. Review data-processing terms, professional-confidentiality obligations, and storage region requirements before storing real data.
 3. Apply migrations from `supabase/migrations/` using the Supabase CLI or approved release process.
 4. Disable public signup in the remote Auth settings. Use administrator invites only.
-5. Require MFA with Supabase Auth TOTP or managed organizational SSO before granting access to real firm data.
-6. Configure session expiration in hosted Supabase Auth: 12-hour timebox and 2-hour inactivity timeout unless an approved firm policy requires stricter values.
-7. Allow-list the hosted password recovery callback URL: `https://<app-domain>/auth/callback/reset-password`.
-8. Keep the `case-documents` bucket private. Object names are expected to use `firm_id/case_id/file-name`.
-9. Store production secrets in the deployment platform and Supabase settings, never in Git.
+5. Configure `FIRM_BOOTSTRAP_TOKEN` and `SUPABASE_SERVICE_ROLE_KEY` server-side only, visit `/bootstrap`, create the initial firm/admin invitation, then rotate or remove `FIRM_BOOTSTRAP_TOKEN`.
+6. Require MFA with Supabase Auth TOTP or managed organizational SSO before granting access to real firm data.
+7. Configure session expiration in hosted Supabase Auth: 12-hour timebox and 2-hour inactivity timeout unless an approved firm policy requires stricter values.
+8. Allow-list the hosted password recovery callback URL: `https://<app-domain>/auth/callback/reset-password`.
+9. Keep the `case-documents` bucket private. Object names are expected to use `firm_id/case_id/file-name`.
+10. Store production secrets in the deployment platform and Supabase settings, never in Git.
+11. Add hosted edge or WAF rate limiting for auth form posts, especially `/sign-in`, `/reset-password`, `/mfa/verify`, and `/mfa/enroll`. Start with low end-user-IP thresholds for the internal invite-only workflow, then tune from logs. Do not enable CAPTCHA by default; use Cloudflare Turnstile or hCaptcha if abusive traffic appears or edge rate limiting is unavailable.
+12. Complete `docs/hosted-auth-production-checklist.md` before storing real firm data and after any hosted Auth, hosting, or identity-provider change.
+
+## MFA Recovery and Offboarding
+
+Lost authenticator recovery is administrator-assisted. After out-of-band identity verification, an admin can use `Restablecer MFA` on the team page to remove a member's enrolled factors; the member must enroll MFA again before accessing `/app`. Disabling a member removes case assignments, removes enrolled MFA factors, and records audit metadata without note bodies, TOTP secrets, recovery codes, or matter details. If all admins are locked out, use a Supabase dashboard or SQL break-glass procedure and record a separate incident note.
 
 ## Security Model
 
@@ -186,7 +193,7 @@ Database tests under `supabase/tests/rls.sql` are pgTAP tests intended for `pnpm
 ## Security Limitations and Production Readiness Remaining
 
 - Complete runtime MFA enforcement by checking Supabase Auth assurance level or relying on mandatory managed SSO policy before using real firm data.
-- Build an invite administration workflow and firm bootstrap procedure.
+- Rotate or remove `FIRM_BOOTSTRAP_TOKEN` after the initial firm setup and keep any later bootstrap use documented in the security review record.
 - Generate Supabase TypeScript types from the live schema to replace the hand-maintained initial `Database` type.
 - Expand Playwright coverage for additional role boundaries and future workflows.
 - Expand role-by-role integration coverage for all core entities as workflows are added.

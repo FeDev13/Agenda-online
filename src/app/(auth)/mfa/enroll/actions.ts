@@ -38,11 +38,19 @@ export async function startMfaEnrollmentAction(): Promise<MfaEnrollState> {
   return {
     enrollment: {
       factorId: data.id,
-      qrCodeDataUrl: `data:image/svg+xml;utf-8,${encodeURIComponent(data.totp.qr_code)}`,
+      qrCodeDataUrl: toSvgDataUrl(data.totp.qr_code),
       secret: data.totp.secret
     },
     message: null
   };
+}
+
+function toSvgDataUrl(qrCode: string) {
+  if (qrCode.startsWith("data:")) {
+    return qrCode;
+  }
+
+  return `data:image/svg+xml;utf-8,${encodeURIComponent(qrCode)}`;
 }
 
 export async function verifyMfaEnrollmentAction(

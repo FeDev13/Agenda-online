@@ -11,6 +11,7 @@ import type {
   CreateDocumentUploadInput,
   CreateNoteInput,
   CreateTaskInput,
+  UpdateNoteInput,
   UpdateTaskStatusInput
 } from "@/features/cases/validation";
 import { canManageCaseWork } from "@/lib/domain/authorization";
@@ -35,8 +36,10 @@ export type CaseDetail = {
 export type CaseNoteSummary = {
   body: string;
   createdAt: string;
+  createdById: string;
   createdByName: string;
   id: string;
+  updatedAt: string;
 };
 
 export type CaseTaskSummary = {
@@ -85,6 +88,7 @@ type NoteRow = {
   created_at: string;
   created_by: string;
   id: string;
+  updated_at: string;
 };
 
 type TaskRow = {
@@ -176,7 +180,7 @@ export async function listCaseNotes(caseId: string): Promise<CaseNoteSummary[]> 
 
   const { data, error } = await supabase
     .from("notes")
-    .select("id,body,created_by,created_at")
+    .select("id,body,created_by,created_at,updated_at")
     .eq("firm_id", membership.firmId)
     .eq("case_id", caseId)
     .is("archived_at", null)
@@ -193,8 +197,10 @@ export async function listCaseNotes(caseId: string): Promise<CaseNoteSummary[]> 
   return rows.map((row) => ({
     body: row.body,
     createdAt: row.created_at,
+    createdById: row.created_by,
     createdByName: profilesById.get(row.created_by)?.display_name ?? "Integrante del equipo",
-    id: row.id
+    id: row.id,
+    updatedAt: row.updated_at
   }));
 }
 
@@ -342,6 +348,45 @@ export async function archiveCaseNote(input: ArchiveNoteInput) {
     membership.firmId,
     user.id,
     "note.archived",
+    "notes",
+    input.noteId
+  );
+  revalidateCase(input.caseId);
+}
+
+export async function updateCaseNote(input: UpdateNoteInput) {
+  const { membership, user } = await requireActiveMembership();
+
+  if (!canManageCaseWork(membership.role)) {
+    throw new UserFacingError("Tu rol no permite actualizar el trabajo de la causa.");
+  }
+
+  const supabase = await createSupabaseServerClient();
+  let updateQuery = supabase
+    .from("notes")
+    .update({
+      body: input.body,
+      updated_by: user.id
+    })
+    .eq("firm_id", membership.firmId)
+    .eq("case_id", input.caseId)
+    .eq("id", input.noteId)
+    .is("archived_at", null);
+
+  if (membership.role === "paralegal") {
+    updateQuery = updateQuery.eq("created_by", user.id);
+  }
+
+  const { data, error } = await updateQuery.select("id").maybeSingle();
+
+  if (error || !data) {
+    throw new UserFacingError("No se pudo actualizar la nota.");
+  }
+
+  await appendAuditLog(
+    membership.firmId,
+    user.id,
+    "note.updated",
     "notes",
     input.noteId
   );

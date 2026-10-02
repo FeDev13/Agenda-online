@@ -6,6 +6,7 @@ import {
   createDocumentUploadSchema,
   createNoteSchema,
   createTaskSchema,
+  updateNoteSchema,
   updateTaskStatusSchema
 } from "@/features/cases/validation";
 import {
@@ -13,6 +14,7 @@ import {
   createCaseNote,
   createCaseTask,
   createDocumentMetadata,
+  updateCaseNote,
   updateCaseTaskStatus,
   uploadCaseDocument
 } from "@/lib/server/case-detail";
@@ -147,4 +149,29 @@ export async function archiveNoteAction(formData: FormData) {
   }
 
   await archiveCaseNote(parsed.data);
+}
+
+export async function updateNoteAction(
+  _state: CaseDetailFormState,
+  formData: FormData
+) {
+  const parsed = updateNoteSchema.safeParse({
+    body: formData.get("body"),
+    caseId: formData.get("caseId"),
+    noteId: formData.get("noteId")
+  });
+
+  if (!parsed.success) {
+    return {
+      message: parsed.error.issues[0]?.message ?? "Revisá los datos de la nota.",
+      ok: false
+    };
+  }
+
+  try {
+    await updateCaseNote(parsed.data);
+    return { message: "Nota actualizada.", ok: true };
+  } catch (error) {
+    return { message: toUserMessage(error), ok: false };
+  }
 }

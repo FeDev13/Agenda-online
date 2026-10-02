@@ -21,6 +21,7 @@ import { AssignmentForm } from "./assignment-form";
 import {
   deactivateFirmMemberAction,
   removeCaseAssignmentAction,
+  resetFirmMemberMfaAction,
   updateFirmMemberRoleAction
 } from "./actions";
 import { InviteMemberForm } from "./invite-member-form";
@@ -138,6 +139,20 @@ export default async function TeamPage() {
                                 type="submit"
                               >
                                 Desactivar
+                              </button>
+                            </form>
+                            <form action={resetFirmMemberMfaAction}>
+                              <input
+                                name="profileId"
+                                type="hidden"
+                                value={member.profileId}
+                              />
+                              <button
+                                className="secondaryButton compactButton"
+                                disabled={memberActionsDisabled}
+                                type="submit"
+                              >
+                                Restablecer MFA
                               </button>
                             </form>
                           </div>

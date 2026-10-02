@@ -138,7 +138,8 @@ No authoritative application state is stored in `localStorage`.
 ## Remaining Production Work
 
 - Enforce MFA at runtime through Supabase Auth assurance level checks or mandatory managed SSO before storing real firm data.
-- Build administrator invite and firm bootstrap workflows.
+- Rotate or remove the bootstrap token after first-firm setup and document any later
+  bootstrap use.
 - Generate Supabase TypeScript types from the live schema.
 - Expand Playwright and integration coverage for every role and core entity as workflows are added.
 - Document and test database backup/restore separately from document-storage backup/restore.
@@ -149,5 +150,5 @@ No authoritative application state is stored in `localStorage`.
 
 Extend administration and operational hardening:
 
-- Add invite administration and firm bootstrap flows.
+- Complete remaining operational hardening after the invite and bootstrap flows.
 - Add runtime MFA enforcement through Supabase assurance level checks or managed SSO policy.

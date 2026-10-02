@@ -28,6 +28,10 @@ export const deactivateFirmMemberSchema = z.object({
   profileId: z.string().uuid("Seleccioná un integrante del equipo.")
 });
 
+export const resetFirmMemberMfaSchema = z.object({
+  profileId: z.string().uuid("Seleccioná un integrante del equipo.")
+});
+
 export const inviteFirmMemberSchema = z.object({
   displayName: z
     .string()
@@ -42,5 +46,6 @@ export const inviteFirmMemberSchema = z.object({
 export type AssignCaseMemberInput = z.infer<typeof assignCaseMemberSchema>;
 export type DeactivateFirmMemberInput = z.infer<typeof deactivateFirmMemberSchema>;
 export type InviteFirmMemberInput = z.infer<typeof inviteFirmMemberSchema>;
+export type ResetFirmMemberMfaInput = z.infer<typeof resetFirmMemberMfaSchema>;
 export type RemoveCaseAssignmentInput = z.infer<typeof removeCaseAssignmentSchema>;
 export type UpdateFirmMemberRoleInput = z.infer<typeof updateFirmMemberRoleSchema>;

@@ -7,6 +7,7 @@ import type {
   DeactivateFirmMemberInput,
   InviteFirmMemberInput,
   RemoveCaseAssignmentInput,
+  ResetFirmMemberMfaInput,
   UpdateFirmMemberRoleInput
 } from "@/features/team/validation";
 import {
@@ -256,7 +257,7 @@ export async function inviteFirmMember(input: InviteFirmMemberInput) {
     throw new UserFacingError("Solo administración puede invitar integrantes.");
   }
 
-  const admin = createInviteAdminClient();
+  const admin = createTeamAdminClient();
   const existingProfile = await findProfileByEmail(input.email);
   const profileId = existingProfile?.id ?? (await inviteAuthUser(input));
 
@@ -504,6 +505,7 @@ export async function deactivateFirmMember(input: DeactivateFirmMemberInput) {
     await ensureAnotherActiveAdmin(membership.firmId, input.profileId);
   }
 
+  const removedMfaFactorCount = await deleteUserMfaFactors(input.profileId);
   const { data: removableAssignments, error: removableAssignmentsError } = await supabase
     .from("case_members")
     .select("id,case_id,role")
@@ -543,24 +545,64 @@ export async function deactivateFirmMember(input: DeactivateFirmMemberInput) {
     {
       previous_role: targetMembership.role,
       profile_id: input.profileId,
+      removed_mfa_factor_count: removedMfaFactorCount,
       removed_assignment_count: removableAssignments?.length ?? 0
     }
   );
   revalidateTeamSurfaces();
 }
 
-function createInviteAdminClient() {
+export async function resetFirmMemberMfa(input: ResetFirmMemberMfaInput) {
+  const { membership, user } = await requireActiveMembership();
+
+  if (!canManageFirmMemberships(membership.role)) {
+    throw new UserFacingError("Solo administración puede restablecer MFA.");
+  }
+
+  if (input.profileId === user.id) {
+    throw new UserFacingError("No podés restablecer tu propio MFA.");
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data: targetMembership, error: targetError } = await supabase
+    .from("firm_memberships")
+    .select("id,profile_id,role,status")
+    .eq("firm_id", membership.firmId)
+    .eq("profile_id", input.profileId)
+    .maybeSingle();
+
+  if (targetError || !targetMembership || targetMembership.status !== "active") {
+    throw new UserFacingError("Seleccioná un integrante activo.");
+  }
+
+  const removedMfaFactorCount = await deleteUserMfaFactors(input.profileId);
+
+  await appendAuditLog(
+    membership.firmId,
+    user.id,
+    "membership.mfa_reset",
+    "firm_memberships",
+    targetMembership.id,
+    {
+      profile_id: input.profileId,
+      removed_mfa_factor_count: removedMfaFactorCount
+    }
+  );
+  revalidateTeamSurfaces();
+}
+
+function createTeamAdminClient() {
   try {
     return createSupabaseAdminClient();
   } catch {
     throw new UserFacingError(
-      "Las invitaciones no están configuradas en el servidor."
+      "Las acciones administrativas no están configuradas en el servidor."
     );
   }
 }
 
 async function findProfileByEmail(email: string) {
-  const admin = createInviteAdminClient();
+  const admin = createTeamAdminClient();
   const { data, error } = await admin
     .from("profiles")
     .select("id,display_name,email")
@@ -576,7 +618,7 @@ async function findProfileByEmail(email: string) {
 }
 
 async function inviteAuthUser(input: InviteFirmMemberInput) {
-  const admin = createInviteAdminClient();
+  const admin = createTeamAdminClient();
   const redirectTo = getInviteRedirectUrl();
   const { data, error } = await admin.auth.admin.inviteUserByEmail(input.email, {
     data: input.displayName ? { display_name: input.displayName } : undefined,
@@ -609,7 +651,7 @@ async function createInvitedMembership(
   role: FirmRole,
   invitedBy: string
 ) {
-  const admin = createInviteAdminClient();
+  const admin = createTeamAdminClient();
   const { data, error } = await admin
     .from("firm_memberships")
     .insert({
@@ -634,7 +676,7 @@ async function reinviteDisabledMember(
   role: FirmRole,
   invitedBy: string
 ) {
-  const admin = createInviteAdminClient();
+  const admin = createTeamAdminClient();
   const { data, error } = await admin
     .from("firm_memberships")
     .update({
@@ -665,6 +707,32 @@ function getInviteRedirectUrl() {
   } catch {
     return undefined;
   }
+}
+
+async function deleteUserMfaFactors(userId: string) {
+  const admin = createTeamAdminClient();
+  const { data, error } = await admin.auth.admin.mfa.listFactors({ userId });
+
+  if (error) {
+    throw new UserFacingError("No se pudieron cargar los factores MFA del integrante.");
+  }
+
+  let removedCount = 0;
+
+  for (const factor of data?.factors ?? []) {
+    const { error: deleteError } = await admin.auth.admin.mfa.deleteFactor({
+      id: factor.id,
+      userId
+    });
+
+    if (deleteError) {
+      throw new UserFacingError("No se pudo restablecer MFA del integrante.");
+    }
+
+    removedCount += 1;
+  }
+
+  return removedCount;
 }
 
 async function ensureAnotherActiveAdmin(firmId: string, excludedProfileId: string) {
