@@ -32,7 +32,7 @@ date, alert window, and a sign-in link to `/app/calendar`.
 
 All variables are server-only except the existing public Supabase variables.
 
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_SECRET_KEY`
 - `APP_BASE_URL`
 - `RESEND_API_KEY`
 - `RESEND_FROM_EMAIL`

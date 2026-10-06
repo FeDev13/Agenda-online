@@ -5,11 +5,11 @@ const publicEnvSchema = z.object({
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(1)
 });
 
-const serviceRoleEnvSchema = publicEnvSchema.extend({
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1)
+const supabaseAdminEnvSchema = publicEnvSchema.extend({
+  SUPABASE_SECRET_KEY: z.string().min(1)
 });
 
-const deadlineAlertEnvSchema = serviceRoleEnvSchema.extend({
+const deadlineAlertEnvSchema = supabaseAdminEnvSchema.extend({
   APP_BASE_URL: z.string().url(),
   DEADLINE_ALERT_CRON_SECRET: z.string().min(24),
   RESEND_API_KEY: z.string().min(1),
@@ -32,17 +32,17 @@ export function getPublicEnv() {
   return parsed.data;
 }
 
-export function getServiceRoleEnv() {
-  const parsed = serviceRoleEnvSchema.safeParse({
+export function getSupabaseAdminEnv() {
+  const parsed = supabaseAdminEnvSchema.safeParse({
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY
+    SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY
   });
 
   if (!parsed.success) {
     throw new Error(
-      "Faltan las variables server-only de Supabase. Configurá SUPABASE_SERVICE_ROLE_KEY solo en el entorno del servidor."
+      "Faltan las variables server-only de Supabase. Configurá SUPABASE_SECRET_KEY solo en el entorno del servidor."
     );
   }
 
@@ -59,12 +59,12 @@ export function getDeadlineAlertEnv() {
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
     RESEND_REPLY_TO_EMAIL: process.env.RESEND_REPLY_TO_EMAIL,
-    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY
+    SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY
   });
 
   if (!parsed.success) {
     throw new Error(
-      "Faltan variables para alertas por email. Configurá APP_BASE_URL, DEADLINE_ALERT_CRON_SECRET, RESEND_API_KEY, RESEND_FROM_EMAIL y SUPABASE_SERVICE_ROLE_KEY en el servidor."
+      "Faltan variables para alertas por email. Configurá APP_BASE_URL, DEADLINE_ALERT_CRON_SECRET, RESEND_API_KEY, RESEND_FROM_EMAIL y SUPABASE_SECRET_KEY en el servidor."
     );
   }
 

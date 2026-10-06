@@ -55,11 +55,11 @@ Set at least:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
-For local Supabase, `pnpm db:start` prints the API URL and anon/publishable key. Put those values in `.env.local`. Keep `SUPABASE_SERVICE_ROLE_KEY` server-only and out of browser-exposed variables. It is required for administrator invite actions and scheduled server jobs.
+For local Supabase, `pnpm db:start` prints the API URL and anon/publishable key. Put those values in `.env.local`. Keep `SUPABASE_SECRET_KEY` server-only and out of browser-exposed variables. Use an `sb_secret_...` key for hosted Supabase. For the local stack, the local service-role JWT can be assigned to `SUPABASE_SECRET_KEY`. It is required for administrator invite actions and scheduled server jobs.
 
 Deadline email alerts also require server-only values:
 
-- `SUPABASE_SERVICE_ROLE_KEY` for the scheduled server job.
+- `SUPABASE_SECRET_KEY` for the scheduled server job.
 - `APP_BASE_URL` for sign-in links, such as `https://agenda.example.com`.
 - `RESEND_API_KEY` from the Resend dashboard.
 - `RESEND_FROM_EMAIL`, using a verified Resend sending domain before production.
@@ -164,7 +164,7 @@ Database tests under `supabase/tests/rls.sql` are pgTAP tests intended for `pnpm
 2. Review data-processing terms, professional-confidentiality obligations, and storage region requirements before storing real data.
 3. Apply migrations from `supabase/migrations/` using the Supabase CLI or approved release process.
 4. Disable public signup in the remote Auth settings. Use administrator invites only.
-5. Configure `FIRM_BOOTSTRAP_TOKEN` and `SUPABASE_SERVICE_ROLE_KEY` server-side only, visit `/bootstrap`, create the initial firm/admin invitation, then rotate or remove `FIRM_BOOTSTRAP_TOKEN`.
+5. Configure `FIRM_BOOTSTRAP_TOKEN` and `SUPABASE_SECRET_KEY` server-side only, visit `/bootstrap`, create the initial firm/admin invitation, then rotate or remove `FIRM_BOOTSTRAP_TOKEN`.
 6. Require MFA with Supabase Auth TOTP or managed organizational SSO before granting access to real firm data.
 7. Configure session expiration in hosted Supabase Auth: 12-hour timebox and 2-hour inactivity timeout unless an approved firm policy requires stricter values.
 8. Allow-list the hosted password recovery callback URL: `https://<app-domain>/auth/callback/reset-password`.

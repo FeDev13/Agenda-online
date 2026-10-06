@@ -118,7 +118,7 @@ The checked-in seed creates these synthetic accounts when the local database is 
 
 ## Bundle and Environment Review
 
-A search of `.next/static` and `.next/server` found no `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_DB_PASSWORD` references.
+A search of `.next/static` and `.next/server` found no `SUPABASE_SECRET_KEY` or `SUPABASE_DB_PASSWORD` references.
 
 Source references to privileged Supabase values are limited to `.env.example` and documentation. Runtime Supabase clients use publishable values only.
 
