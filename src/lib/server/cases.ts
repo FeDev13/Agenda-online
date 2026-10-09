@@ -2,6 +2,10 @@ import "server-only";
 
 import { revalidatePath } from "next/cache";
 
+import {
+  type CaseListFilters,
+  filterCaseSummaries
+} from "@/features/cases/filters";
 import type { ArchiveCaseInput, CreateCaseInput } from "@/features/cases/validation";
 import { canArchiveCases, canManageCases } from "@/lib/domain/authorization";
 import { requireActiveMembership } from "@/lib/server/auth";
@@ -33,7 +37,9 @@ type ClientNameRow = {
   id: string;
 };
 
-export async function listOpenCases(): Promise<OpenCaseSummary[]> {
+export async function listOpenCases(
+  filters: CaseListFilters = {}
+): Promise<OpenCaseSummary[]> {
   const { membership } = await requireActiveMembership();
   const supabase = await createSupabaseServerClient();
 
@@ -66,7 +72,7 @@ export async function listOpenCases(): Promise<OpenCaseSummary[]> {
     ((clients ?? []) as ClientNameRow[]).map((client) => [client.id, client.display_name])
   );
 
-  return rows.map((row) => ({
+  const openCases = rows.map((row) => ({
     caseNumber: row.case_number,
     clientName: clientNames.get(row.client_id) ?? "Cliente sin asignar",
     court: row.court,
@@ -75,6 +81,8 @@ export async function listOpenCases(): Promise<OpenCaseSummary[]> {
     openedOn: row.opened_on,
     title: row.title
   }));
+
+  return filterCaseSummaries(openCases, filters);
 }
 
 export async function createCase(input: CreateCaseInput) {

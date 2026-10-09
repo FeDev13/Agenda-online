@@ -1,5 +1,10 @@
 import Link from "next/link";
 
+import {
+  filterCaseSummaries,
+  normalizeCaseCourtFilter,
+  normalizeCaseSearchQuery
+} from "@/features/cases/filters";
 import { canArchiveCases, canManageCases } from "@/lib/domain/authorization";
 import { getCurrentUser } from "@/lib/server/auth";
 import { listOpenCases } from "@/lib/server/cases";
@@ -7,16 +12,31 @@ import { listOpenCases } from "@/lib/server/cases";
 import { archiveCaseAction } from "./actions";
 import { NewCaseForm } from "./new-case-form";
 
-export default async function CasesPage() {
+type CasesPageProps = {
+  searchParams: Promise<{
+    court?: string | string[];
+    q?: string | string[];
+  }>;
+};
+
+export default async function CasesPage({ searchParams }: CasesPageProps) {
   const user = await getCurrentUser();
 
   if (!user?.membership) {
     return <NoActiveFirm />;
   }
 
-  const cases = await listOpenCases();
+  const params = await searchParams;
+  const courtFilter = normalizeCaseCourtFilter(params.court);
+  const searchQuery = normalizeCaseSearchQuery(params.q);
+  const caseOptions = await listOpenCases();
+  const cases = filterCaseSummaries(caseOptions, {
+    court: courtFilter,
+    search: searchQuery
+  });
   const canCreate = canManageCases(user.membership.role);
   const canArchive = canArchiveCases(user.membership.role);
+  const hasActiveFilters = Boolean(courtFilter || searchQuery);
 
   return (
     <>
@@ -30,7 +50,46 @@ export default async function CasesPage() {
       </div>
       <div className="grid two">
         <section className="panel" aria-labelledby="open-cases-title">
-          <h2 id="open-cases-title">Listado de causas abiertas</h2>
+          <div className="sectionHeader">
+            <h2 id="open-cases-title">Listado de causas abiertas</h2>
+            <span className="badge">{cases.length} visibles</span>
+          </div>
+          <form action="/app/cases" className="caseSearchForm" role="search">
+            {courtFilter ? (
+              <input name="court" type="hidden" value={courtFilter} />
+            ) : null}
+            <div className="field caseSearchField">
+              <label htmlFor="case-search">Buscar causa</label>
+              <input
+                autoComplete="off"
+                defaultValue={searchQuery}
+                id="case-search"
+                list="case-search-options"
+                name="q"
+                placeholder="Nombre, cliente, número o expediente"
+                type="search"
+              />
+              <datalist id="case-search-options">
+                {caseOptions.map((caseItem) => (
+                  <option
+                    key={caseItem.id}
+                    label={`${caseItem.clientName} · ${caseItem.caseNumber}`}
+                    value={`${caseItem.title} ${caseItem.caseNumber}`}
+                  />
+                ))}
+              </datalist>
+            </div>
+            <div className="inlineForm">
+              <button className="button compactButton" type="submit">
+                Buscar
+              </button>
+              {hasActiveFilters ? (
+                <Link className="secondaryButton compactButton" href="/app/cases">
+                  Limpiar
+                </Link>
+              ) : null}
+            </div>
+          </form>
           {cases.length ? (
             <ul className="caseList">
               {cases.map((caseItem) => (
@@ -65,7 +124,9 @@ export default async function CasesPage() {
             </ul>
           ) : (
             <p className="emptyState">
-              No hay causas abiertas visibles para esta cuenta.
+              {hasActiveFilters
+                ? "No hay causas abiertas que coincidan con la busqueda actual."
+                : "No hay causas abiertas visibles para esta cuenta."}
             </p>
           )}
         </section>

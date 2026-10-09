@@ -117,6 +117,41 @@ button {
   outline: none;
 }
 
+.sidebarFilters {
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  margin-top: 24px;
+  padding-top: 18px;
+}
+
+.sidebarFilters strong {
+  display: block;
+  font-size: 0.88rem;
+  margin-bottom: 10px;
+}
+
+.sidebarFilterList {
+  display: grid;
+  gap: 6px;
+}
+
+.sidebarFilterList a {
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #eef7fa;
+  padding: 8px 10px;
+}
+
+.sidebarFilterList a:hover,
+.sidebarFilterList a:focus-visible {
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+}
+
+.sidebarFilterList a.active {
+  background: #f8fbfc;
+  color: #102832;
+}
+
 .textLink {
   color: var(--brand);
   display: inline-block;
@@ -196,6 +231,32 @@ button {
 .panel h2 {
   font-size: 1.05rem;
   margin: 0 0 14px;
+}
+
+.sectionHeader {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.sectionHeader h2 {
+  margin: 0;
+}
+
+.caseSearchForm {
+  align-items: end;
+  border-bottom: 1px solid var(--border);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+}
+
+.caseSearchField input {
+  width: 100%;
 }
 
 .metricGrid {
@@ -498,6 +559,7 @@ button {
   .pageHeader,
   .cardHeader,
   .actionRow,
+  .sectionHeader,
   .cardFooterAction {
     align-items: stretch;
     flex-direction: column;
@@ -514,7 +576,8 @@ button {
 
   .grid.two,
   .metricGrid,
-  .fieldRow {
+  .fieldRow,
+  .caseSearchForm {
     grid-template-columns: 1fr;
   }
 }

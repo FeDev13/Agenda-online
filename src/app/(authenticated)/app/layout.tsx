@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { formatFirmRole } from "@/lib/display-labels";
 import { requireMfaVerified } from "@/lib/server/auth";
 import { hasImminentScheduleDeadline } from "@/lib/server/scheduling";
 
+import { CaseCourtSidebarFilter } from "./case-court-sidebar-filter";
 import { signOutAction } from "./actions";
 
 export default async function AuthenticatedLayout({
@@ -42,6 +44,9 @@ export default async function AuthenticatedLayout({
           </Link>
           <Link href="/app/team">Accesos</Link>
         </nav>
+        <Suspense fallback={null}>
+          <CaseCourtSidebarFilter />
+        </Suspense>
       </aside>
       <div className="mainArea">
         <header className="topbar">
