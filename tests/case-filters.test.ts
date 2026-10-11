@@ -27,6 +27,13 @@ const cases = [
     court: "Juzgado de Familia",
     docketNumber: "FA-30",
     title: "Regimen de comunicacion"
+  },
+  {
+    caseNumber: "EXP-004",
+    clientName: "Juan Sosa",
+    court: "Tribunal del Trabajo 2",
+    docketNumber: "TT-40",
+    title: "Despido"
   }
 ];
 
@@ -43,6 +50,7 @@ describe("case filters", () => {
       cases[1]
     ]);
     expect(filterCaseSummaries(cases, { court: "familia" })).toEqual([cases[2]]);
+    expect(filterCaseSummaries(cases, { court: "laboral" })).toEqual([cases[3]]);
   });
 
   it("matches case search across case, client, court, and docket fields", () => {

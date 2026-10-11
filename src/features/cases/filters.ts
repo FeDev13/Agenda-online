@@ -87,6 +87,12 @@ function caseMatchesCourtFilter(
     return court.includes("civil") && court.includes("comercial");
   }
 
+  if (courtFilter === "laboral") {
+    return (
+      court.includes("laboral") || court.includes("tribunal del trabajo")
+    );
+  }
+
   return court.includes(courtFilter);
 }
 
