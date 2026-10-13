@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(23);
+select plan(24);
 
 insert into auth.users (
   id,
@@ -217,6 +217,23 @@ select throws_ok(
   '42501',
   'new row violates row-level security policy for table "cases"',
   'cross-firm case insert is denied'
+);
+
+select lives_ok(
+  $$
+    select public.create_case_with_client(
+      '20000000-0000-4000-8000-000000000001',
+      'Cliente Sintetico RPC',
+      'A-RPC-001',
+      'Causa creada por RPC',
+      '2026-09-03'::date,
+      'Ciudad Autonoma de Buenos Aires',
+      'Juzgado Civil RPC',
+      'EXP-RPC-001',
+      'Causa sintetica creada por prueba RLS.'
+    )
+  $$,
+  'firm lawyer can create cases through the create-case RPC'
 );
 
 select throws_ok(

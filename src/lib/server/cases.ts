@@ -6,6 +6,7 @@ import {
   type CaseListFilters,
   filterCaseSummaries
 } from "@/features/cases/filters";
+import { toCreateCaseErrorMessage } from "@/features/cases/error-messages";
 import type { ArchiveCaseInput, CreateCaseInput } from "@/features/cases/validation";
 import { canArchiveCases, canManageCases } from "@/lib/domain/authorization";
 import { requireActiveMembership } from "@/lib/server/auth";
@@ -106,7 +107,11 @@ export async function createCase(input: CreateCaseInput) {
   });
 
   if (error) {
-    throw new UserFacingError("No se pudo crear la causa.");
+    console.error("create_case_with_client failed", {
+      code: error.code,
+      message: error.message
+    });
+    throw new UserFacingError(toCreateCaseErrorMessage(error));
   }
 
   revalidatePath("/app");
