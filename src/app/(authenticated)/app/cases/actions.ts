@@ -1,7 +1,11 @@
 "use server";
 
-import { archiveCaseSchema, createCaseSchema } from "@/features/cases/validation";
-import { archiveCase, createCase } from "@/lib/server/cases";
+import {
+  archiveCaseSchema,
+  createCaseSchema,
+  permanentlyDeleteCaseSchema
+} from "@/features/cases/validation";
+import { archiveCase, createCase, permanentlyDeleteCase } from "@/lib/server/cases";
 import { toUserMessage } from "@/lib/server/errors";
 
 export type CaseFormState = {
@@ -46,4 +50,30 @@ export async function archiveCaseAction(formData: FormData) {
   }
 
   await archiveCase(parsed.data);
+}
+
+export async function permanentlyDeleteCaseAction(
+  _state: CaseFormState,
+  formData: FormData
+) {
+  const parsed = permanentlyDeleteCaseSchema.safeParse({
+    caseId: formData.get("caseId"),
+    caseNumber: formData.get("caseNumber"),
+    confirmation: formData.get("confirmation")
+  });
+
+  if (!parsed.success) {
+    return {
+      message:
+        parsed.error.issues[0]?.message ?? "Revisá los datos de la causa.",
+      ok: false
+    };
+  }
+
+  try {
+    await permanentlyDeleteCase(parsed.data);
+    return { message: "Causa eliminada definitivamente.", ok: true };
+  } catch (error) {
+    return { message: toUserMessage(error), ok: false };
+  }
 }

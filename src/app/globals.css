@@ -329,6 +329,25 @@ button {
   margin-top: 12px;
 }
 
+.archivedCasesPanel {
+  margin-top: 18px;
+}
+
+.permanentDeleteForm {
+  align-items: end;
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(180px, 1fr) auto;
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.permanentDeleteForm p {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
 .inlineForm {
   align-items: center;
   display: flex;
@@ -577,7 +596,8 @@ button {
   .grid.two,
   .metricGrid,
   .fieldRow,
-  .caseSearchForm {
+  .caseSearchForm,
+  .permanentDeleteForm {
     grid-template-columns: 1fr;
   }
 }

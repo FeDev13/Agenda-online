@@ -126,6 +126,17 @@ export const archiveCaseSchema = z.object({
   caseId: z.string().uuid("Seleccioná una causa.")
 });
 
+export const permanentlyDeleteCaseSchema = z
+  .object({
+    caseId: z.string().uuid("Seleccioná una causa."),
+    caseNumber: z.string().trim().min(1, "El número de causa es obligatorio."),
+    confirmation: z.string().trim().min(1, "Confirmá el número de causa.")
+  })
+  .refine((value) => value.confirmation === value.caseNumber, {
+    message: "La confirmación debe coincidir con el número de causa.",
+    path: ["confirmation"]
+  });
+
 export const createEventSchema = z
   .object({
     caseId: z.string().uuid("Seleccioná una causa."),
@@ -230,5 +241,8 @@ export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 export type HideScheduleItemInput = z.infer<typeof hideScheduleItemSchema>;
 export type ArchiveNoteInput = z.infer<typeof archiveNoteSchema>;
 export type ArchiveCaseInput = z.infer<typeof archiveCaseSchema>;
+export type PermanentlyDeleteCaseInput = z.infer<
+  typeof permanentlyDeleteCaseSchema
+>;
 export type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
 export type UpdateTaskStatusInput = z.infer<typeof updateTaskStatusSchema>;

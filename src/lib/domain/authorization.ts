@@ -19,6 +19,10 @@ export function canArchiveCases(role: FirmRole) {
   return role === "admin";
 }
 
+export function canPermanentlyDeleteCases(role: FirmRole) {
+  return role === "admin";
+}
+
 export function canManageScheduling(role: FirmRole) {
   return role === "admin" || role === "lawyer" || role === "paralegal";
 }

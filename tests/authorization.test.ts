@@ -7,6 +7,7 @@ import {
   canManageCases,
   canManageFirmMemberships,
   canManageCaseWork,
+  canPermanentlyDeleteCases,
   canManageScheduling,
   isSameFirm,
   type ActiveMembership
@@ -43,6 +44,8 @@ describe("domain authorization", () => {
   it("separates case creation from scheduling permissions", () => {
     expect(canArchiveCases("admin")).toBe(true);
     expect(canArchiveCases("lawyer")).toBe(false);
+    expect(canPermanentlyDeleteCases("admin")).toBe(true);
+    expect(canPermanentlyDeleteCases("lawyer")).toBe(false);
     expect(canManageCases("paralegal")).toBe(false);
     expect(canManageScheduling("paralegal")).toBe(true);
     expect(canManageCases("read_only")).toBe(false);

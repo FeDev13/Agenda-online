@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(24);
+select plan(30);
 
 insert into auth.users (
   id,
@@ -243,6 +243,18 @@ select throws_ok(
   '42501',
   'not authorized',
   'firm lawyer cannot archive cases through the archive RPC'
+);
+
+select throws_ok(
+  $$
+    select public.delete_case_permanently(
+      '22000000-0000-4000-8000-000000000001',
+      'A-001'
+    )
+  $$,
+  '42501',
+  'not authorized',
+  'firm lawyer cannot permanently delete cases'
 );
 
 select throws_ok(
@@ -491,6 +503,59 @@ select is(
   ),
   1,
   'case archive writes an audit entry'
+);
+
+select throws_ok(
+  $$
+    select public.delete_case_permanently(
+      '22000000-0000-4000-8000-000000000001',
+      'WRONG-CONFIRMATION'
+    )
+  $$,
+  '22023',
+  'confirmation does not match case number',
+  'permanent deletion requires exact case-number confirmation'
+);
+
+select lives_ok(
+  $$
+    select public.delete_case_permanently(
+      '22000000-0000-4000-8000-000000000001',
+      'A-001'
+    )
+  $$,
+  'firm admin can permanently delete an archived case with confirmation'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.cases
+    where id = '22000000-0000-4000-8000-000000000001'
+  ),
+  0,
+  'permanent deletion removes the archived case row'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.case_members
+    where case_id = '22000000-0000-4000-8000-000000000001'
+  ),
+  0,
+  'permanent deletion removes case assignments'
+);
+
+select is(
+  (
+    select count(*)::integer
+    from public.audit_log
+    where action = 'case.deleted_permanently'
+      and target_id = '22000000-0000-4000-8000-000000000001'
+  ),
+  1,
+  'permanent deletion writes an audit entry'
 );
 
 select * from finish();

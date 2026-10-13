@@ -10,6 +10,7 @@ import {
   createTaskSchema,
   dateOnlySchema,
   hideScheduleItemSchema,
+  permanentlyDeleteCaseSchema,
   updateNoteSchema,
   updateTaskStatusSchema
 } from "@/features/cases/validation";
@@ -124,6 +125,24 @@ describe("case and scheduling validation", () => {
         sizeBytes: "1024"
       }).sizeBytes
     ).toBe(1024);
+  });
+
+  it("requires exact case-number confirmation for permanent case deletion", () => {
+    expect(
+      permanentlyDeleteCaseSchema.parse({
+        caseId: "10000000-0000-4000-8000-000000000001",
+        caseNumber: "SYN-2026-001",
+        confirmation: "SYN-2026-001"
+      }).confirmation
+    ).toBe("SYN-2026-001");
+
+    expect(
+      permanentlyDeleteCaseSchema.safeParse({
+        caseId: "10000000-0000-4000-8000-000000000001",
+        caseNumber: "SYN-2026-001",
+        confirmation: "SYN-2026-002"
+      }).success
+    ).toBe(false);
   });
 
   it("rejects invalid document metadata sizes", () => {

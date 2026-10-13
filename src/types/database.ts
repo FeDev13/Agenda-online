@@ -422,6 +422,13 @@ export type Database = {
         };
         Returns: string;
       };
+      delete_case_permanently: {
+        Args: {
+          p_case_id: string;
+          p_confirmation: string;
+        };
+        Returns: void;
+      };
       create_legal_deadline: {
         Args: {
           p_calculation_notes?: string | null;

@@ -30,6 +30,7 @@ Current implementation progress and verification results are recorded in [`docs/
 - Team access page for inviting firm members, viewing membership status, assigning/removing case access, changing roles, deactivating members, and reviewing recent audit entries.
 - Case detail page for reviewing case context, notes, tasks, and private document metadata.
 - Admin-only case archival from the open-cases list, with audit recording and no hard delete.
+- Admin-only permanent deletion for archived synthetic/development cases, with exact case-number confirmation and audit recording.
 - Case work creation for notes, tasks, and private document uploads by admins, lawyers, and assigned paralegals.
 - Note archival and task status transitions for authorized case-work users.
 - Short-lived signed document download route after server authorization.
@@ -184,6 +185,7 @@ Lost authenticator recovery is administrator-assisted. After out-of-band identit
 - `paralegal` and `read_only` require explicit case assignment for case-restricted records.
 - `read_only` can view assigned case records but cannot create notes, tasks, reminders, scheduling entries, document uploads, document metadata, or assignments.
 - Only `admin` can archive cases. Archived cases remain in PostgreSQL and are removed from open-case workflow lists.
+- Only `admin` can permanently delete archived cases, and only for synthetic/development cleanup or an approved retention procedure. See [`docs/case-retention.md`](docs/case-retention.md).
 - Mutations are checked in server-only code and again by PostgreSQL RLS/RPC functions.
 - Cross-firm access is denied by helper functions used by policies.
 - Anonymous database access is explicitly revoked for the application schema.

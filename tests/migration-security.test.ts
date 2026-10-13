@@ -49,9 +49,9 @@ describe("initial Supabase migration security posture", () => {
       "grant select, insert, update, delete on public.case_members to authenticated;"
     );
     expect(migrationWithoutAssignmentGrant).not.toMatch(
-      /grant\s+[^;]*delete[^;]*\s+to authenticated/i
+      /grant\s+(?!execute\b)[^;]*\bdelete\b[^;]*\s+to authenticated/i
     );
-    expect(migration).not.toMatch(/grant\s+[^;]*delete[^;]*\s+to anon/i);
+    expect(migration).not.toMatch(/grant\s+(?!execute\b)[^;]*\bdelete\b[^;]*\s+to anon/i);
   });
 
   it("explicitly avoids anonymous table and routine access", () => {
@@ -95,6 +95,22 @@ describe("initial Supabase migration security posture", () => {
     expect(migration).toContain("grant execute on function public.archive_case(uuid)");
   });
 
+  it("keeps permanent case deletion behind an explicit admin RPC", () => {
+    expect(migration).toContain(
+      "create or replace function public.delete_case_permanently"
+    );
+    expect(migration).toContain("security definer");
+    expect(migration).toContain("v_status <> 'archived'");
+    expect(migration).toContain("trim(coalesce(p_confirmation, '')) <> v_case_number");
+    expect(migration).toContain("'case.deleted_permanently'");
+    expect(migration).toContain(
+      "revoke all on function public.delete_case_permanently(uuid, text) from public"
+    );
+    expect(migration).toContain(
+      "grant execute on function public.delete_case_permanently(uuid, text) to authenticated"
+    );
+  });
+
   it("lets authenticated invited users accept their own firm invitations", () => {
     expect(migration).toContain(
       "create or replace function public.accept_pending_firm_invitations()"
@@ -122,7 +138,13 @@ describe("initial Supabase migration security posture", () => {
     expect(migration).toContain(
       "grant execute on function public.hide_schedule_item(text, uuid) to authenticated"
     );
-    expect(migration).not.toMatch(/delete\s+from\s+public\.(events|case_deadlines)/i);
+    const migrationWithoutPermanentDeletion = migration.replace(
+      /create or replace function public\.delete_case_permanently[\s\S]*?grant execute on function public\.delete_case_permanently\(uuid, text\) to authenticated;/,
+      ""
+    );
+    expect(migrationWithoutPermanentDeletion).not.toMatch(
+      /delete\s+from\s+public\.(events|case_deadlines)/i
+    );
   });
 
   it("stores email alert deliveries behind service-only access", () => {

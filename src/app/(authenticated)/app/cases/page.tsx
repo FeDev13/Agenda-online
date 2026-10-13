@@ -5,12 +5,17 @@ import {
   normalizeCaseCourtFilter,
   normalizeCaseSearchQuery
 } from "@/features/cases/filters";
-import { canArchiveCases, canManageCases } from "@/lib/domain/authorization";
+import {
+  canArchiveCases,
+  canManageCases,
+  canPermanentlyDeleteCases
+} from "@/lib/domain/authorization";
 import { getCurrentUser } from "@/lib/server/auth";
-import { listOpenCases } from "@/lib/server/cases";
+import { listArchivedCases, listOpenCases } from "@/lib/server/cases";
 
 import { archiveCaseAction } from "./actions";
 import { NewCaseForm } from "./new-case-form";
+import { PermanentDeleteCaseForm } from "./permanent-delete-case-form";
 
 type CasesPageProps = {
   searchParams: Promise<{
@@ -36,6 +41,8 @@ export default async function CasesPage({ searchParams }: CasesPageProps) {
   });
   const canCreate = canManageCases(user.membership.role);
   const canArchive = canArchiveCases(user.membership.role);
+  const canPermanentlyDelete = canPermanentlyDeleteCases(user.membership.role);
+  const archivedCases = canPermanentlyDelete ? await listArchivedCases() : [];
   const hasActiveFilters = Boolean(courtFilter || searchQuery);
 
   return (
@@ -140,6 +147,39 @@ export default async function CasesPage({ searchParams }: CasesPageProps) {
           <NewCaseForm canCreate={canCreate} />
         </section>
       </div>
+      {canPermanentlyDelete ? (
+        <section className="panel archivedCasesPanel" aria-labelledby="archived-cases-title">
+          <div className="sectionHeader">
+            <h2 id="archived-cases-title">Causas archivadas</h2>
+            <span className="badge">{archivedCases.length} archivadas</span>
+          </div>
+          {archivedCases.length ? (
+            <ul className="caseList">
+              {archivedCases.map((caseItem) => (
+                <li className="card" key={caseItem.id}>
+                  <div className="cardHeader">
+                    <div>
+                      <strong>{caseItem.title}</strong>
+                      <p className="muted">
+                        {caseItem.clientName}
+                        {caseItem.court ? ` · ${caseItem.court}` : ""}
+                        {caseItem.docketNumber ? ` · ${caseItem.docketNumber}` : ""}
+                      </p>
+                    </div>
+                    <span className="badge">{caseItem.caseNumber}</span>
+                  </div>
+                  <PermanentDeleteCaseForm
+                    caseId={caseItem.id}
+                    caseNumber={caseItem.caseNumber}
+                  />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="emptyState">No hay causas archivadas.</p>
+          )}
+        </section>
+      ) : null}
     </>
   );
 }
