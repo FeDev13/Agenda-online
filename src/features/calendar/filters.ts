@@ -3,7 +3,7 @@ import { z } from "zod";
 const dateFilter = z.union([z.literal(""), z.iso.date()]);
 const schema = z
   .object({
-    scope: z.enum(["upcoming", "overdue", "review", "resolved"]),
+    scope: z.enum(["upcoming", "overdue", "review", "resolved", "all"]),
     page: z
       .union([z.number(), z.string().regex(/^[1-9]\d*$/)])
       .transform(Number)

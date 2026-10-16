@@ -234,6 +234,19 @@ select is((public.list_agenda('20000000-0000-4000-8000-000000000001', 'resolved'
 select throws_ok($test$select public.set_deadline_status('23000000-0000-4000-8000-000000000001','needs_review',4)$test$, '22023', 'invalid deadline status', 'clients cannot send deadline back to migration-only review state');
 select lives_ok($test$select public.hide_schedule_item('deadline','23000000-0000-4000-8000-000000000001')$test$, 'column grants preserve schedule hiding');
 select is((public.list_agenda('20000000-0000-4000-8000-000000000001', 'overdue', 'all', null, null, 1)->>'total')::int, 1, 'hiding never removes an overdue obligation');
+-- A successfully created event must remain discoverable after its start time.
+select lives_ok($test$select public.create_case_event(
+  '22000000-0000-4000-8000-000000000001', 'Past synthetic event',
+  (now() at time zone 'America/Argentina/Buenos_Aires') - interval '1 hour'
+)$test$, 'past event creation succeeds');
+select lives_ok($test$select public.create_case_event(
+  '22000000-0000-4000-8000-000000000001', 'Future synthetic event',
+  (now() at time zone 'America/Argentina/Buenos_Aires') + interval '1 day'
+)$test$, 'future event creation succeeds');
+select is((public.list_agenda('20000000-0000-4000-8000-000000000001', 'all', 'event')->>'total')::int, 2, 'all entries includes both past and future events');
+select is((public.list_agenda('20000000-0000-4000-8000-000000000001', 'upcoming', 'event')->>'total')::int, 1, 'upcoming still excludes past events');
+select is((public.list_agenda('20000000-0000-4000-8000-000000000001', 'overdue', 'event')->>'total')::int, 0, 'past events are not overdue obligations');
+select throws_ok($test$select public.list_agenda('30000000-0000-4000-8000-000000000001', 'all', 'event')$test$, '42501', 'not authorized', 'event history denies cross-firm reads');
 reset role;
 update public.firm_memberships set status='disabled' where profile_id='aaaaaaaa-0000-4000-8000-000000000004';
 set local role authenticated;

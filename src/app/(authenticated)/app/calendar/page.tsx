@@ -20,7 +20,8 @@ const scopes = {
   upcoming: "Próximos ítems",
   overdue: "Vencidos",
   review: "Por revisar",
-  resolved: "Resueltos"
+  resolved: "Resueltos",
+  all: "Todas las entradas"
 } as const;
 
 export default async function CalendarPage({

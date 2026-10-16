@@ -8,6 +8,15 @@ describe("agenda filters", () => {
     { kind: "deadline", dateKey: "2026-10-03" }
   ];
 
+  it("accepts the all-entries view for past events", () => {
+    expect(parseScheduleFilters({ scope: "all", kind: "event" })).toMatchObject({
+      scope: "all",
+      kind: "event",
+      page: 1,
+      invalid: false
+    });
+  });
+
   it("combines type and inclusive date boundaries", () => {
     expect(
       filterSchedule(

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { Button } from "@/components/button";
 import { FormField } from "@/components/form-field";
 import { FormFeedback } from "@/components/form-feedback";
@@ -97,6 +99,11 @@ export function ScheduleForms({
             <textarea disabled={disabled} id="event-description" name="description" />
           </FormField>
           <FormFeedback state={eventState} />
+          {eventState.ok ? (
+            <Link className="inlineLink" href="/app/calendar?scope=all&kind=event">
+              Ver eventos creados, incluidos los anteriores
+            </Link>
+          ) : null}
           <Button
             disabled={disabled || eventPending}
             type="submit"
