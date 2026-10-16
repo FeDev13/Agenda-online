@@ -16,7 +16,8 @@
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "db:status": "supabase status",
-    "test:db": "supabase test db supabase/tests"
+    "test:db": "supabase test db supabase/tests",
+    "db:check:linked": "node scripts/check-linked-migrations.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.5",

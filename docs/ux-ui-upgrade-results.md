@@ -38,6 +38,12 @@ Screenshots use synthetic data only. They were captured in development mode; the
 
 ## Scope and follow-up
 
-The follow-up adds an audited deadline lifecycle migration and column grants protecting status changes. Existing RLS and case-role boundaries remain enforced. The migration is applied locally; no hosted database has been changed. Resolved deadlines are excluded from alerts, and historical past deadlines require review rather than being assumed overdue. See [the lifecycle release notes](deadline-lifecycle.md).
+The follow-up adds an audited deadline lifecycle migration and column grants protecting status changes. Existing RLS and case-role boundaries remain enforced. The migration was applied locally and later to the linked hosted database to fix the deployment rollout. A read-only `pnpm db:check:linked` preflight now detects missing migrations before release. Resolved deadlines are excluded from alerts, and historical past deadlines require review rather than being assumed overdue. See [the lifecycle release notes](deadline-lifecycle.md).
 
 Automated A/AA scans and large-text reflow checks now pass. Firm-user observation, native browser zoom/forced-color checks, and a manual screen-reader assessment remain human acceptance work; [the session checklist](ux-ui-acceptance-checklist.md) is ready. Dark mode, theme customization, animation, and a month/week calendar remain deferred as described in the plan.
+
+## Deployment follow-up
+
+The first deployed application release reached the hosted database before migration `202610160001` was applied. The dashboard and calendar both depend on `list_agenda`, so this missing RPC prevented rendering. The migration has now been applied to the linked hosted database and its API schema cache refreshed. A read-only database check confirmed that the function exists and authenticated users can execute it.
+
+`pnpm db:check:linked` now checks local/remote migration parity before application deployment. Regression tests cover missing, incomplete, malformed, and divergent histories. The follow-up passed 86 unit tests, lint, type checking, and the production build. The deployment URL is protected by Vercel SSO, so signed-in page rendering still requires verification in the user's session.

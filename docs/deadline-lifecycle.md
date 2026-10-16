@@ -31,13 +31,13 @@ Resolved deadlines leave future alert selection. The email job also rechecks cur
 
 `supabase/migrations/202610160001_deadline_lifecycle.sql` is additive and does not reset the database. Existing deadlines earlier than the firm's current local date become `needs_review`, including hidden deadlines. Each receives a system audit entry. Existing future deadlines retain pending behavior.
 
-The migration was applied to the local Supabase database for validation. Hosted databases have not been changed.
+The migration was validated locally and subsequently applied to the linked hosted database after the application deployment exposed a missing-migration failure. Both `/app` and `/app/calendar` require `list_agenda`; pushing application code alone does not apply database migrations.
 
 For a hosted release:
 
 1. Take the normal database backup and verify the restore procedure. This migration changes no stored document contents or bucket policies; keep document backups under the separate existing procedure.
 2. Pause deadline email scheduling during the application/migration switch.
-3. Apply the checked-in migration using the approved deployment process, then deploy this application version.
+3. Apply the checked-in migration using the approved deployment process, run `pnpm db:check:linked`, then deploy this application version. This read-only preflight exits unsuccessfully if any local migration is missing remotely or the histories diverge.
 4. Run role/cross-firm smoke checks with synthetic accounts; inspect the review queue and confirm pending/resolved behavior.
 5. Resume the job using the new status-aware code. Have authorized firm staff review historical deadlines without bulk-assuming their outcome.
 

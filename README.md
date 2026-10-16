@@ -84,7 +84,7 @@ Local Supabase config lives in `supabase/config.toml`. Public signup is disabled
 
 ## Deadline Lifecycle
 
-The agenda supports upcoming, overdue, historical-review, and resolved views with database filtering and pagination. Legal deadlines can be completed, cancelled, and reopened through an audited, revision-checked workflow. Historical past deadlines require human review. See [`docs/deadline-lifecycle.md`](docs/deadline-lifecycle.md) for migration, permissions, and coordinated release instructions.
+The agenda supports upcoming, overdue, historical-review, and resolved views with database filtering and pagination. Legal deadlines can be completed, cancelled, and reopened through an audited, revision-checked workflow. Historical past deadlines require human review. See [`docs/deadline-lifecycle.md`](docs/deadline-lifecycle.md) for migration, permissions, and coordinated release instructions. Before deploying, run `pnpm db:check:linked` with the Supabase CLI logged in and linked to the intended project; it verifies migration parity without changing data. Git pushes do not apply database migrations.
 
 ## Deadline Email Alerts
 
