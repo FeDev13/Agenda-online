@@ -18,12 +18,11 @@ import {
   updateCaseTaskStatus,
   uploadCaseDocument
 } from "@/lib/server/case-detail";
+import type { ActionResult } from "@/types/action-result";
+import { validationFailure } from "@/lib/server/form-validation";
 import { toUserMessage } from "@/lib/server/errors";
 
-export type CaseDetailFormState = {
-  message: string | null;
-  ok: boolean;
-};
+export type CaseDetailFormState = ActionResult;
 
 export async function createNoteAction(_state: CaseDetailFormState, formData: FormData) {
   const parsed = createNoteSchema.safeParse({
@@ -32,10 +31,7 @@ export async function createNoteAction(_state: CaseDetailFormState, formData: Fo
   });
 
   if (!parsed.success) {
-    return {
-      message: parsed.error.issues[0]?.message ?? "Revisá los datos de la nota.",
-      ok: false
-    };
+    return validationFailure(parsed.error);
   }
 
   try {
@@ -55,10 +51,7 @@ export async function createTaskAction(_state: CaseDetailFormState, formData: Fo
   });
 
   if (!parsed.success) {
-    return {
-      message: parsed.error.issues[0]?.message ?? "Revisá los datos de la tarea.",
-      ok: false
-    };
+    return validationFailure(parsed.error);
   }
 
   try {
@@ -81,10 +74,7 @@ export async function createDocumentMetadataAction(
   });
 
   if (!parsed.success) {
-    return {
-      message: parsed.error.issues[0]?.message ?? "Revisá los datos del documento.",
-      ok: false
-    };
+    return validationFailure(parsed.error);
   }
 
   try {
@@ -106,10 +96,7 @@ export async function uploadDocumentAction(
   });
 
   if (!parsed.success) {
-    return {
-      message: parsed.error.issues[0]?.message ?? "Revisá los datos del documento.",
-      ok: false
-    };
+    return validationFailure(parsed.error);
   }
 
   if (!(file instanceof File)) {
@@ -132,10 +119,15 @@ export async function updateTaskStatusAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return;
+    return { ok: false, message: "Revisá los datos e intentá nuevamente." };
   }
 
-  await updateCaseTaskStatus(parsed.data);
+  try {
+    await updateCaseTaskStatus(parsed.data);
+    return { ok: true, message: "Estado de tarea actualizado." };
+  } catch (error) {
+    return { ok: false, message: toUserMessage(error) };
+  }
 }
 
 export async function archiveNoteAction(formData: FormData) {
@@ -145,16 +137,18 @@ export async function archiveNoteAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return;
+    return { ok: false, message: "Revisá los datos e intentá nuevamente." };
   }
 
-  await archiveCaseNote(parsed.data);
+  try {
+    await archiveCaseNote(parsed.data);
+    return { ok: true, message: "Nota archivada." };
+  } catch (error) {
+    return { ok: false, message: toUserMessage(error) };
+  }
 }
 
-export async function updateNoteAction(
-  _state: CaseDetailFormState,
-  formData: FormData
-) {
+export async function updateNoteAction(_state: CaseDetailFormState, formData: FormData) {
   const parsed = updateNoteSchema.safeParse({
     body: formData.get("body"),
     caseId: formData.get("caseId"),
@@ -162,10 +156,7 @@ export async function updateNoteAction(
   });
 
   if (!parsed.success) {
-    return {
-      message: parsed.error.issues[0]?.message ?? "Revisá los datos de la nota.",
-      ok: false
-    };
+    return validationFailure(parsed.error);
   }
 
   try {

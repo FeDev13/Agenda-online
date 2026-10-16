@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation";
 
+import { toUserMessage } from "@/lib/server/errors";
+
 import { hideScheduleItemSchema } from "@/features/cases/validation";
 import { hideScheduleItem } from "@/lib/server/scheduling";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -19,8 +21,13 @@ export async function hideScheduleItemAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return;
+    return { ok: false, message: "Revisá los datos e intentá nuevamente." };
   }
 
-  await hideScheduleItem(parsed.data);
+  try {
+    await hideScheduleItem(parsed.data);
+    return { ok: true, message: "Entrada ocultada para el estudio." };
+  } catch (error) {
+    return { ok: false, message: toUserMessage(error) };
+  }
 }

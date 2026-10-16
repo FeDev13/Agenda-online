@@ -1,4 +1,8 @@
 import Link from "next/link";
+import { Suspense } from "react";
+import { ActionForm } from "@/components/action-form";
+import { InlineNotice } from "@/components/inline-notice";
+import { CaseCourtFilter } from "@/features/cases/case-court-filter";
 
 import {
   filterCaseSummaries,
@@ -50,16 +54,28 @@ export default async function CasesPage({ searchParams }: CasesPageProps) {
       <div className="pageHeader">
         <div>
           <h1>Causas abiertas</h1>
-          <p>
-            Causas activas visibles según el estudio actual y las reglas de asignación.
-          </p>
+          <p>Buscá una causa por cliente, número, expediente o juzgado.</p>
         </div>
       </div>
-      <div className="grid two">
+      {canCreate ? (
+        <details className="panel disclosure" id="create-case">
+          <summary>Crear causa</summary>
+          <h2 id="create-case-title">Crear una causa</h2>
+          <NewCaseForm canCreate={canCreate} />
+        </details>
+      ) : (
+        <InlineNotice>
+          Tu acceso permite consultar las causas asignadas. Para crear una causa, consultá
+          con un abogado o la administración.
+        </InlineNotice>
+      )}
+      <div className="grid">
         <section className="panel" aria-labelledby="open-cases-title">
           <div className="sectionHeader">
             <h2 id="open-cases-title">Listado de causas abiertas</h2>
-            <span className="badge">{cases.length} visibles</span>
+            <span className="badge">
+              {cases.length} {cases.length === 1 ? "visible" : "visibles"}
+            </span>
           </div>
           <form action="/app/cases" className="caseSearchForm" role="search">
             {courtFilter ? (
@@ -87,7 +103,7 @@ export default async function CasesPage({ searchParams }: CasesPageProps) {
               </datalist>
             </div>
             <div className="inlineForm">
-              <button className="button compactButton" type="submit">
+              <button className="secondaryButton compactButton" type="submit">
                 Buscar
               </button>
               {hasActiveFilters ? (
@@ -97,6 +113,17 @@ export default async function CasesPage({ searchParams }: CasesPageProps) {
               ) : null}
             </div>
           </form>
+          <Suspense fallback={null}>
+            <CaseCourtFilter />
+          </Suspense>
+          {hasActiveFilters ? (
+            <p className="muted">
+              Filtros activos:{" "}
+              {[searchQuery ? `“${searchQuery}”` : null, courtFilter]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          ) : null}
           {cases.length ? (
             <ul className="caseList">
               {cases.map((caseItem) => (
@@ -116,15 +143,15 @@ export default async function CasesPage({ searchParams }: CasesPageProps) {
                     <span className="badge">{caseItem.caseNumber}</span>
                   </div>
                   {canArchive ? (
-                    <form action={archiveCaseAction} className="cardFooterAction">
+                    <ActionForm
+                      action={archiveCaseAction}
+                      className="cardFooterAction"
+                      label="Archivar causa"
+                      pendingLabel="Archivando…"
+                      confirmation={`La causa ${caseItem.caseNumber} dejará de aparecer entre las causas abiertas. Sus datos se conservarán.`}
+                    >
                       <input name="caseId" type="hidden" value={caseItem.id} />
-                      <button
-                        className="secondaryButton dangerButton compactButton"
-                        type="submit"
-                      >
-                        Archivar causa
-                      </button>
-                    </form>
+                    </ActionForm>
                   ) : null}
                 </li>
               ))}
@@ -132,23 +159,15 @@ export default async function CasesPage({ searchParams }: CasesPageProps) {
           ) : (
             <p className="emptyState">
               {hasActiveFilters
-                ? "No hay causas abiertas que coincidan con la busqueda actual."
+                ? "No hay causas abiertas que coincidan con la búsqueda actual."
                 : "No hay causas abiertas visibles para esta cuenta."}
             </p>
           )}
         </section>
-        <section className="panel" aria-labelledby="create-case-title">
-          <h2 id="create-case-title">Crear una causa</h2>
-          {!canCreate ? (
-            <p className="errorText">
-              Solo administración y abogados pueden crear causas.
-            </p>
-          ) : null}
-          <NewCaseForm canCreate={canCreate} />
-        </section>
       </div>
       {canPermanentlyDelete ? (
-        <section className="panel archivedCasesPanel" aria-labelledby="archived-cases-title">
+        <details className="panel archivedCasesPanel disclosure">
+          <summary>Causas archivadas · {archivedCases.length}</summary>
           <div className="sectionHeader">
             <h2 id="archived-cases-title">Causas archivadas</h2>
             <span className="badge">{archivedCases.length} archivadas</span>
@@ -168,17 +187,25 @@ export default async function CasesPage({ searchParams }: CasesPageProps) {
                     </div>
                     <span className="badge">{caseItem.caseNumber}</span>
                   </div>
-                  <PermanentDeleteCaseForm
-                    caseId={caseItem.id}
-                    caseNumber={caseItem.caseNumber}
-                  />
+                  <details className="disclosure">
+                    <summary>Eliminar definitivamente</summary>
+                    <p className="notice notice-error">
+                      Esta acción es irreversible. Solo corresponde para datos sintéticos
+                      o un procedimiento de retención aprobado. Escribí el número de causa
+                      para confirmar.
+                    </p>
+                    <PermanentDeleteCaseForm
+                      caseId={caseItem.id}
+                      caseNumber={caseItem.caseNumber}
+                    />
+                  </details>
                 </li>
               ))}
             </ul>
           ) : (
             <p className="emptyState">No hay causas archivadas.</p>
           )}
-        </section>
+        </details>
       ) : null}
     </>
   );

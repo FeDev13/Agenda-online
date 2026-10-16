@@ -1,11 +1,9 @@
-import Link from "next/link";
-import { Suspense } from "react";
+import { AppNavigation } from "@/components/app-navigation";
 
 import { formatFirmRole } from "@/lib/display-labels";
 import { requireMfaVerified } from "@/lib/server/auth";
 import { hasImminentScheduleDeadline } from "@/lib/server/scheduling";
 
-import { CaseCourtSidebarFilter } from "./case-court-sidebar-filter";
 import { signOutAction } from "./actions";
 
 export default async function AuthenticatedLayout({
@@ -19,34 +17,15 @@ export default async function AuthenticatedLayout({
 
   return (
     <div className="appShell">
+      <a className="skipLink" href="#main-content">
+        Saltar al contenido
+      </a>
       <aside className="sidebar">
         <div className="brandBlock">
           <strong>Agenda Legal</strong>
           <span>Gestión de causas</span>
         </div>
-        <nav aria-label="Navegación principal" className="navList">
-          <Link href="/app">Inicio</Link>
-          <Link href="/app/cases">Causas abiertas</Link>
-          <Link href="/app/calendar">
-            <span>Agenda</span>
-            {showAgendaWarning ? (
-              <>
-                <span
-                  aria-hidden="true"
-                  className="navAlertIcon"
-                  title="Vencimiento dentro de 48 horas"
-                >
-                  !
-                </span>
-                <span className="srOnly">Hay vencimientos dentro de 48 horas</span>
-              </>
-            ) : null}
-          </Link>
-          <Link href="/app/team">Accesos</Link>
-        </nav>
-        <Suspense fallback={null}>
-          <CaseCourtSidebarFilter />
-        </Suspense>
+        <AppNavigation showAgendaWarning={showAgendaWarning} />
       </aside>
       <div className="mainArea">
         <header className="topbar">
@@ -65,7 +44,9 @@ export default async function AuthenticatedLayout({
             </button>
           </form>
         </header>
-        <main className="content">{children}</main>
+        <main className="content" id="main-content" tabIndex={-1}>
+          {children}
+        </main>
       </div>
     </div>
   );

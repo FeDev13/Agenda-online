@@ -1,6 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { Button } from "@/components/button";
+import { FormField } from "@/components/form-field";
+import { FormFeedback } from "@/components/form-feedback";
+import { InlineNotice } from "@/components/inline-notice";
+import { useFormAction } from "@/components/use-form-action";
 
 import type { OpenCaseSummary } from "@/lib/server/cases";
 import type { FirmMemberSummary } from "@/lib/server/team";
@@ -19,16 +23,22 @@ export function AssignmentForm({
   cases: OpenCaseSummary[];
   members: FirmMemberSummary[];
 }) {
-  const [state, formAction, pending] = useActionState(
-    assignCaseMemberAction,
-    initialState
-  );
+  const {
+    state: state,
+    formAction: formAction,
+    pending: pending,
+    onReset: formActionReset
+  } = useFormAction(assignCaseMemberAction, initialState);
   const disabled = !canAssign || cases.length === 0 || members.length === 0;
 
   return (
-    <form action={formAction} className="formGrid">
-      <div className="field">
-        <label htmlFor="assignment-case">Causa</label>
+    <form onReset={formActionReset} action={formAction} className="formGrid">
+      {disabled ? (
+        <InlineNotice>
+          Necesitás una causa abierta e integrantes activos para asignar acceso.
+        </InlineNotice>
+      ) : null}
+      <FormField id="assignment-case" label="Causa" error={state.fieldErrors?.caseId}>
         <select disabled={disabled} id="assignment-case" name="caseId" required>
           <option value="">Seleccionar causa</option>
           {cases.map((caseItem) => (
@@ -37,9 +47,12 @@ export function AssignmentForm({
             </option>
           ))}
         </select>
-      </div>
-      <div className="field">
-        <label htmlFor="assignment-member">Integrante del equipo</label>
+      </FormField>
+      <FormField
+        id="assignment-member"
+        label="Integrante del equipo"
+        error={state.fieldErrors?.profileId}
+      >
         <select disabled={disabled} id="assignment-member" name="profileId" required>
           <option value="">Seleccionar integrante</option>
           {members.map((member) => (
@@ -48,9 +61,12 @@ export function AssignmentForm({
             </option>
           ))}
         </select>
-      </div>
-      <div className="field">
-        <label htmlFor="assignment-role">Rol de asignación</label>
+      </FormField>
+      <FormField
+        id="assignment-role"
+        label="Rol de asignación"
+        error={state.fieldErrors?.role}
+      >
         <input
           defaultValue="assigned"
           disabled={disabled}
@@ -58,15 +74,11 @@ export function AssignmentForm({
           name="role"
           required
         />
-      </div>
-      {state.message ? (
-        <p aria-live="polite" className={state.ok ? "muted" : "errorText"}>
-          {state.message}
-        </p>
-      ) : null}
-      <button className="button" disabled={disabled || pending} type="submit">
+      </FormField>
+      <FormFeedback state={state} />
+      <Button disabled={disabled || pending} type="submit" aria-busy={pending}>
         {pending ? "Asignando..." : "Asignar acceso a la causa"}
-      </button>
+      </Button>
     </form>
   );
 }

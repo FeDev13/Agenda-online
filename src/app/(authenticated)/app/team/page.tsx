@@ -1,3 +1,5 @@
+import { ActionForm } from "@/components/action-form";
+import { InlineNotice } from "@/components/inline-notice";
 import {
   canManageCaseAssignments,
   canManageFirmMemberships
@@ -54,23 +56,34 @@ export default async function TeamPage() {
         </div>
       </div>
 
-      <section
-        aria-labelledby="invite-member-title"
-        className="panel"
-        style={{ marginBottom: 18 }}
-      >
-        <h2 id="invite-member-title">Invitar integrante</h2>
-        {!canManageMembers ? (
-          <p className="errorText">Solo administración puede invitar integrantes.</p>
-        ) : null}
-        <InviteMemberForm canInvite={canManageMembers} />
-      </section>
+      {canManageMembers ? (
+        <details className="panel disclosure">
+          <summary>Invitar integrante</summary>
+          <section
+            aria-labelledby="invite-member-title"
+            className="panel"
+            style={{ marginBottom: 18 }}
+          >
+            <h2 id="invite-member-title">Invitar integrante</h2>
+            <InviteMemberForm canInvite={canManageMembers} />
+          </section>
+        </details>
+      ) : (
+        <InlineNotice>
+          La administración gestiona las invitaciones y los roles del equipo.
+        </InlineNotice>
+      )}
 
-      <div className="grid two">
+      <div className="grid">
         <section className="panel" aria-labelledby="team-members-title">
           <h2 id="team-members-title">Integrantes del estudio</h2>
           {members.length ? (
-            <div className="tableWrap">
+            <div
+              className="tableWrap"
+              role="region"
+              aria-label="Integrantes del estudio"
+              tabIndex={0}
+            >
               <table className="dataTable">
                 <thead>
                   <tr>
@@ -97,65 +110,67 @@ export default async function TeamPage() {
                         <td>{formatMembershipStatus(member.status)}</td>
                         <td>{member.assignmentCount}</td>
                         <td>
-                          <div className="stackedActions">
-                            <form
-                              action={updateFirmMemberRoleAction}
-                              className="inlineForm"
-                            >
-                              <input
-                                name="profileId"
-                                type="hidden"
-                                value={member.profileId}
-                              />
-                              <select
-                                aria-label={`Rol de ${member.displayName ?? member.email}`}
-                                defaultValue={member.role}
-                                disabled={memberActionsDisabled}
-                                name="role"
-                              >
-                                {roleOptions.map((role) => (
-                                  <option key={role} value={role}>
-                                    {formatFirmRole(role)}
-                                  </option>
-                                ))}
-                              </select>
-                              <button
-                                className="secondaryButton compactButton"
-                                disabled={memberActionsDisabled}
-                                type="submit"
-                              >
-                                Cambiar rol
-                              </button>
-                            </form>
-                            <form action={deactivateFirmMemberAction}>
-                              <input
-                                name="profileId"
-                                type="hidden"
-                                value={member.profileId}
-                              />
-                              <button
-                                className="secondaryButton compactButton dangerButton"
-                                disabled={memberActionsDisabled}
-                                type="submit"
-                              >
-                                Desactivar
-                              </button>
-                            </form>
-                            <form action={resetFirmMemberMfaAction}>
-                              <input
-                                name="profileId"
-                                type="hidden"
-                                value={member.profileId}
-                              />
-                              <button
-                                className="secondaryButton compactButton"
-                                disabled={memberActionsDisabled}
-                                type="submit"
-                              >
-                                Restablecer MFA
-                              </button>
-                            </form>
-                          </div>
+                          {!memberActionsDisabled ? (
+                            <details className="disclosure teamActions">
+                              <summary>Gestionar acceso</summary>
+                              <div className="sectionStack">
+                                <ActionForm
+                                  action={updateFirmMemberRoleAction}
+                                  label="Cambiar rol"
+                                  className="formGrid"
+                                  confirmation={`Se actualizará el rol de ${member.displayName ?? member.email} al rol seleccionado. Revisá los permisos antes de confirmar.`}
+                                >
+                                  <input
+                                    name="profileId"
+                                    type="hidden"
+                                    value={member.profileId}
+                                  />
+                                  <select
+                                    aria-label={`Rol de ${member.displayName ?? member.email}`}
+                                    defaultValue={member.role}
+                                    name="role"
+                                  >
+                                    {roleOptions.map((role) => (
+                                      <option key={role} value={role}>
+                                        {formatFirmRole(role)}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </ActionForm>
+                                <ActionForm
+                                  action={deactivateFirmMemberAction}
+                                  label="Desactivar"
+                                  variant="danger"
+                                  confirmation={`Se revocará el acceso de ${member.displayName ?? member.email} al estudio, se quitarán sus asignaciones y se restablecerá su MFA.`}
+                                >
+                                  <input
+                                    name="profileId"
+                                    type="hidden"
+                                    value={member.profileId}
+                                  />
+                                </ActionForm>
+                                <ActionForm
+                                  action={resetFirmMemberMfaAction}
+                                  label="Restablecer MFA"
+                                  confirmation={`${member.displayName ?? member.email} deberá configurar nuevamente su autenticador. Confirmá su identidad antes de continuar.`}
+                                >
+                                  <input
+                                    name="profileId"
+                                    type="hidden"
+                                    value={member.profileId}
+                                  />
+                                </ActionForm>
+                              </div>
+                            </details>
+                          ) : (
+                            <span>
+                              {isSelf
+                                ? "Tu cuenta: otra persona administradora debe gestionar estos cambios."
+                                : member.status !== "active"
+                                  ? "Disponible cuando la membresía esté activa."
+                                  : "Solo administración puede gestionar este acceso."}
+                            </span>
+                          )}
                         </td>
                       </tr>
                     );
@@ -168,15 +183,19 @@ export default async function TeamPage() {
           )}
         </section>
 
-        <section className="panel" aria-labelledby="assign-access-title">
-          <h2 id="assign-access-title">Asignar acceso a causa</h2>
-          {!canAssign ? (
-            <p className="errorText">
-              Solo administración y abogados pueden asignar acceso a causas.
-            </p>
-          ) : null}
-          <AssignmentForm canAssign={canAssign} cases={cases} members={activeMembers} />
-        </section>
+        {canAssign ? (
+          <details className="panel disclosure">
+            <summary>Asignar acceso a causa</summary>
+            <section aria-labelledby="assign-access-title">
+              <h2 id="assign-access-title">Asignar acceso a causa</h2>
+              <AssignmentForm
+                canAssign={canAssign}
+                cases={cases}
+                members={activeMembers}
+              />
+            </section>
+          </details>
+        ) : null}
       </div>
 
       <section
@@ -186,7 +205,12 @@ export default async function TeamPage() {
       >
         <h2 id="case-assignments-title">Asignaciones actuales</h2>
         {assignments.length ? (
-          <div className="tableWrap">
+          <div
+            className="tableWrap"
+            role="region"
+            aria-label="Asignaciones actuales"
+            tabIndex={0}
+          >
             <table className="dataTable">
               <thead>
                 <tr>
@@ -209,21 +233,23 @@ export default async function TeamPage() {
                     </td>
                     <td>{formatAssignmentRole(assignment.role)}</td>
                     <td>
-                      <form action={removeCaseAssignmentAction}>
-                        <input name="caseId" type="hidden" value={assignment.caseId} />
-                        <input
-                          name="profileId"
-                          type="hidden"
-                          value={assignment.profileId}
-                        />
-                        <button
-                          className="secondaryButton compactButton dangerButton"
-                          disabled={!canAssign}
-                          type="submit"
+                      {canAssign ? (
+                        <ActionForm
+                          action={removeCaseAssignmentAction}
+                          label="Remover acceso"
+                          variant="danger"
+                          confirmation={`Se quitará la asignación de ${assignment.displayName ?? assignment.email} a la causa ${assignment.caseNumber}. Los roles con acceso general al estudio conservarán sus permisos.`}
                         >
-                          Remover acceso
-                        </button>
-                      </form>
+                          <input name="caseId" type="hidden" value={assignment.caseId} />
+                          <input
+                            name="profileId"
+                            type="hidden"
+                            value={assignment.profileId}
+                          />
+                        </ActionForm>
+                      ) : (
+                        <span>Solo consulta</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -242,7 +268,12 @@ export default async function TeamPage() {
       >
         <h2 id="audit-log-title">Auditoría reciente</h2>
         {canAssign && auditEntries.length ? (
-          <div className="tableWrap">
+          <div
+            className="tableWrap"
+            role="region"
+            aria-label="Auditoría reciente"
+            tabIndex={0}
+          >
             <table className="dataTable">
               <thead>
                 <tr>
@@ -264,7 +295,13 @@ export default async function TeamPage() {
                       <strong>{entry.targetTable}</strong>
                       <span>{entry.targetId ?? "Sin identificador"}</span>
                     </td>
-                    <td>{new Date(entry.createdAt).toLocaleString()}</td>
+                    <td>
+                      {new Date(entry.createdAt).toLocaleString("es-AR", {
+                        timeZone:
+                          process.env.DEFAULT_FIRM_TIMEZONE ??
+                          "America/Argentina/Buenos_Aires"
+                      })}
+                    </td>
                   </tr>
                 ))}
               </tbody>

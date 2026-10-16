@@ -8,6 +8,8 @@ import {
   resetFirmMemberMfaSchema,
   updateFirmMemberRoleSchema
 } from "@/features/team/validation";
+import type { ActionResult } from "@/types/action-result";
+import { validationFailure } from "@/lib/server/form-validation";
 import { toUserMessage } from "@/lib/server/errors";
 import {
   assignCaseMember,
@@ -18,15 +20,9 @@ import {
   updateFirmMemberRole
 } from "@/lib/server/team";
 
-export type AssignCaseMemberFormState = {
-  message: string | null;
-  ok: boolean;
-};
+export type AssignCaseMemberFormState = ActionResult;
 
-export type InviteFirmMemberFormState = {
-  message: string | null;
-  ok: boolean;
-};
+export type InviteFirmMemberFormState = ActionResult;
 
 export async function inviteFirmMemberAction(
   _state: InviteFirmMemberFormState,
@@ -39,10 +35,7 @@ export async function inviteFirmMemberAction(
   });
 
   if (!parsed.success) {
-    return {
-      message: parsed.error.issues[0]?.message ?? "Revisá los datos de la invitación.",
-      ok: false
-    };
+    return validationFailure(parsed.error);
   }
 
   try {
@@ -64,10 +57,7 @@ export async function assignCaseMemberAction(
   });
 
   if (!parsed.success) {
-    return {
-      message: parsed.error.issues[0]?.message ?? "Revisá los datos de la asignación.",
-      ok: false
-    };
+    return validationFailure(parsed.error);
   }
 
   try {
@@ -85,10 +75,15 @@ export async function removeCaseAssignmentAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return;
+    return { ok: false, message: "Revisá los datos e intentá nuevamente." };
   }
 
-  await removeCaseAssignment(parsed.data);
+  try {
+    await removeCaseAssignment(parsed.data);
+    return { ok: true, message: "Acceso a causa removido." };
+  } catch (error) {
+    return { ok: false, message: toUserMessage(error) };
+  }
 }
 
 export async function updateFirmMemberRoleAction(formData: FormData) {
@@ -98,10 +93,15 @@ export async function updateFirmMemberRoleAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return;
+    return { ok: false, message: "Revisá los datos e intentá nuevamente." };
   }
 
-  await updateFirmMemberRole(parsed.data);
+  try {
+    await updateFirmMemberRole(parsed.data);
+    return { ok: true, message: "Rol actualizado." };
+  } catch (error) {
+    return { ok: false, message: toUserMessage(error) };
+  }
 }
 
 export async function deactivateFirmMemberAction(formData: FormData) {
@@ -110,10 +110,15 @@ export async function deactivateFirmMemberAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return;
+    return { ok: false, message: "Revisá los datos e intentá nuevamente." };
   }
 
-  await deactivateFirmMember(parsed.data);
+  try {
+    await deactivateFirmMember(parsed.data);
+    return { ok: true, message: "Integrante desactivado." };
+  } catch (error) {
+    return { ok: false, message: toUserMessage(error) };
+  }
 }
 
 export async function resetFirmMemberMfaAction(formData: FormData) {
@@ -122,8 +127,13 @@ export async function resetFirmMemberMfaAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return;
+    return { ok: false, message: "Revisá los datos e intentá nuevamente." };
   }
 
-  await resetFirmMemberMfa(parsed.data);
+  try {
+    await resetFirmMemberMfa(parsed.data);
+    return { ok: true, message: "MFA restablecido." };
+  } catch (error) {
+    return { ok: false, message: toUserMessage(error) };
+  }
 }

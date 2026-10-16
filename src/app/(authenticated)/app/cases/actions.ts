@@ -6,12 +6,11 @@ import {
   permanentlyDeleteCaseSchema
 } from "@/features/cases/validation";
 import { archiveCase, createCase, permanentlyDeleteCase } from "@/lib/server/cases";
+import type { ActionResult } from "@/types/action-result";
+import { validationFailure } from "@/lib/server/form-validation";
 import { toUserMessage } from "@/lib/server/errors";
 
-export type CaseFormState = {
-  message: string | null;
-  ok: boolean;
-};
+export type CaseFormState = ActionResult;
 
 export async function createCaseAction(_state: CaseFormState, formData: FormData) {
   const parsed = createCaseSchema.safeParse({
@@ -26,10 +25,7 @@ export async function createCaseAction(_state: CaseFormState, formData: FormData
   });
 
   if (!parsed.success) {
-    return {
-      message: parsed.error.issues[0]?.message ?? "Revisá los datos de la causa.",
-      ok: false
-    };
+    return validationFailure(parsed.error);
   }
 
   try {
@@ -46,10 +42,15 @@ export async function archiveCaseAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return;
+    return { ok: false, message: "Revisá los datos e intentá nuevamente." };
   }
 
-  await archiveCase(parsed.data);
+  try {
+    await archiveCase(parsed.data);
+    return { ok: true, message: "Causa archivada." };
+  } catch (error) {
+    return { ok: false, message: toUserMessage(error) };
+  }
 }
 
 export async function permanentlyDeleteCaseAction(
@@ -63,11 +64,7 @@ export async function permanentlyDeleteCaseAction(
   });
 
   if (!parsed.success) {
-    return {
-      message:
-        parsed.error.issues[0]?.message ?? "Revisá los datos de la causa.",
-      ok: false
-    };
+    return validationFailure(parsed.error);
   }
 
   try {

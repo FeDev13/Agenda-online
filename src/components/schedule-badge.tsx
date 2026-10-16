@@ -10,11 +10,13 @@ const deadlineBadgeClassNames: Record<DeadlineProximity, string> = {
 export function ScheduleBadge({
   dateLabel,
   deadlineProximity,
-  kind
+  kind,
+  urgencyLabel
 }: {
   dateLabel: string;
   deadlineProximity: DeadlineProximity | null;
   kind: "deadline" | "event" | "task";
+  urgencyLabel?: string | null;
 }) {
   const className = [
     "badge",
@@ -27,6 +29,7 @@ export function ScheduleBadge({
   return (
     <span className={className}>
       {formatScheduleKind(kind)}: {dateLabel}
+      {urgencyLabel ? <span className="urgencyLabel"> · {urgencyLabel}</span> : null}
     </span>
   );
 }

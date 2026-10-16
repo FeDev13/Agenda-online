@@ -1,23 +1,37 @@
 "use client";
 
-import { useActionState } from "react";
+import { Button } from "@/components/button";
+import { FormField } from "@/components/form-field";
+import { FormFeedback } from "@/components/form-feedback";
+import { useFormAction } from "@/components/use-form-action";
 
 import { createCaseAction, type CaseFormState } from "./actions";
 
 const initialState: CaseFormState = { message: null, ok: false };
 
 export function NewCaseForm({ canCreate }: { canCreate: boolean }) {
-  const [state, formAction, pending] = useActionState(createCaseAction, initialState);
+  const {
+    state: state,
+    formAction: formAction,
+    pending: pending,
+    onReset: formActionReset
+  } = useFormAction(createCaseAction, initialState);
 
   return (
-    <form action={formAction} className="formGrid">
+    <form onReset={formActionReset} action={formAction} className="formGrid">
       <div className="fieldRow">
-        <div className="field">
-          <label htmlFor="caseNumber">Número de causa</label>
+        <FormField
+          id="caseNumber"
+          label="Número de causa"
+          error={state.fieldErrors?.caseNumber}
+        >
           <input disabled={!canCreate} id="caseNumber" name="caseNumber" required />
-        </div>
-        <div className="field">
-          <label htmlFor="openedOn">Fecha de apertura</label>
+        </FormField>
+        <FormField
+          id="openedOn"
+          label="Fecha de apertura"
+          error={state.fieldErrors?.openedOn}
+        >
           <input
             disabled={!canCreate}
             id="openedOn"
@@ -25,42 +39,44 @@ export function NewCaseForm({ canCreate }: { canCreate: boolean }) {
             required
             type="date"
           />
-        </div>
+        </FormField>
       </div>
-      <div className="field">
-        <label htmlFor="title">Título de la causa</label>
+      <FormField id="title" label="Título de la causa" error={state.fieldErrors?.title}>
         <input disabled={!canCreate} id="title" name="title" required />
-      </div>
-      <div className="field">
-        <label htmlFor="clientName">Cliente</label>
+      </FormField>
+      <FormField id="clientName" label="Cliente" error={state.fieldErrors?.clientName}>
         <input disabled={!canCreate} id="clientName" name="clientName" required />
-      </div>
+      </FormField>
       <div className="fieldRow">
-        <div className="field">
-          <label htmlFor="court">Juzgado</label>
+        <FormField id="court" label="Juzgado" error={state.fieldErrors?.court}>
           <input disabled={!canCreate} id="court" name="court" />
-        </div>
-        <div className="field">
-          <label htmlFor="docketNumber">Expediente</label>
+        </FormField>
+        <FormField
+          id="docketNumber"
+          label="Expediente"
+          error={state.fieldErrors?.docketNumber}
+        >
           <input disabled={!canCreate} id="docketNumber" name="docketNumber" />
-        </div>
+        </FormField>
       </div>
-      <div className="field">
-        <label htmlFor="jurisdiction">Jurisdicción</label>
+      <FormField
+        id="jurisdiction"
+        label="Jurisdicción"
+        error={state.fieldErrors?.jurisdiction}
+      >
         <input disabled={!canCreate} id="jurisdiction" name="jurisdiction" />
-      </div>
-      <div className="field">
-        <label htmlFor="description">Descripción interna</label>
+      </FormField>
+      <FormField
+        id="description"
+        label="Descripción interna"
+        error={state.fieldErrors?.description}
+      >
         <textarea disabled={!canCreate} id="description" name="description" />
-      </div>
-      {state.message ? (
-        <p aria-live="polite" className={state.ok ? "muted" : "errorText"}>
-          {state.message}
-        </p>
-      ) : null}
-      <button className="button" disabled={!canCreate || pending} type="submit">
+      </FormField>
+      <FormFeedback state={state} />
+      <Button disabled={!canCreate || pending} type="submit" aria-busy={pending}>
         {pending ? "Creando..." : "Crear causa"}
-      </button>
+      </Button>
     </form>
   );
 }

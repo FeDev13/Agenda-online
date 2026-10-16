@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useFormAction } from "@/components/use-form-action";
 
 import { updatePasswordAction, type PasswordUpdateState } from "./actions";
 
@@ -9,13 +9,15 @@ const initialState: PasswordUpdateState = {
 };
 
 export function UpdatePasswordForm() {
-  const [state, formAction, pending] = useActionState(
-    updatePasswordAction,
-    initialState
-  );
+  const {
+    state: state,
+    formAction: formAction,
+    pending: pending,
+    onReset: formActionReset
+  } = useFormAction(updatePasswordAction, initialState);
 
   return (
-    <form action={formAction} className="formGrid">
+    <form onReset={formActionReset} action={formAction} className="formGrid">
       <div className="field">
         <label htmlFor="new-password">Nueva contraseña</label>
         <input

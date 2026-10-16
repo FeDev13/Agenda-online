@@ -91,9 +91,14 @@ describe("route smoke checks", () => {
       "utf8"
     );
 
-    expect(layout).toContain("/app/cases");
-    expect(layout).toContain("/app/calendar");
-    expect(layout).toContain("/app/team");
+    const navigation = readFileSync(
+      join(process.cwd(), "src/components/app-navigation.tsx"),
+      "utf8"
+    );
+    expect(layout).toContain("AppNavigation");
+    expect(navigation).toContain("/app/cases");
+    expect(navigation).toContain("/app/calendar");
+    expect(navigation).toContain("/app/team");
     expect(layout).toContain("requireMfaVerified");
     expect(layout).toContain("signOutAction");
   });
@@ -143,7 +148,10 @@ describe("route smoke checks", () => {
       join(process.cwd(), "src/app/(authenticated)/app/team/actions.ts"),
       "utf8"
     );
-    const teamServer = readFileSync(join(process.cwd(), "src/lib/server/team.ts"), "utf8");
+    const teamServer = readFileSync(
+      join(process.cwd(), "src/lib/server/team.ts"),
+      "utf8"
+    );
 
     expect(teamPage).toContain("Integrantes del estudio");
     expect(teamPage).toContain("Invitar integrante");

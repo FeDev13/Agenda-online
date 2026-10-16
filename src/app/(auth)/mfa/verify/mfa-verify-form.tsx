@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useFormAction } from "@/components/use-form-action";
 
 import { verifyMfaAction, type MfaVerifyState } from "./actions";
 
@@ -15,10 +15,15 @@ export function MfaVerifyForm({
   factors: Array<{ friendly_name?: string; id: string }>;
   next: string;
 }) {
-  const [state, formAction, pending] = useActionState(verifyMfaAction, initialState);
+  const {
+    state: state,
+    formAction: formAction,
+    pending: pending,
+    onReset: formActionReset
+  } = useFormAction(verifyMfaAction, initialState);
 
   return (
-    <form action={formAction} className="formGrid">
+    <form onReset={formActionReset} action={formAction} className="formGrid">
       <input name="next" type="hidden" value={next} />
       {factors.length === 1 ? (
         <input name="factorId" type="hidden" value={factors[0]?.id} />

@@ -1,10 +1,13 @@
 import Link from "next/link";
 
+import { ActionForm } from "@/components/action-form";
 import { ScheduleBadge } from "@/components/schedule-badge";
-import { canManageCases, canManageScheduling } from "@/lib/domain/authorization";
+import { canManageScheduling } from "@/lib/domain/authorization";
 import { getCurrentUser } from "@/lib/server/auth";
 import { listOpenCases } from "@/lib/server/cases";
-import { listUpcomingSchedule } from "@/lib/server/scheduling";
+import { listAgenda } from "@/lib/server/agenda";
+import { parseScheduleFilters } from "@/features/calendar/filters";
+import { InlineNotice } from "@/components/inline-notice";
 
 import { hideScheduleItemAction } from "./actions";
 
@@ -15,7 +18,13 @@ export default async function DashboardPage() {
     return <NoActiveFirm />;
   }
 
-  const [cases, schedule] = await Promise.all([listOpenCases(), listUpcomingSchedule()]);
+  const [cases, upcoming, overdue, review] = await Promise.all([
+    listOpenCases(),
+    listAgenda(parseScheduleFilters({})),
+    listAgenda(parseScheduleFilters({ scope: "overdue" })),
+    listAgenda(parseScheduleFilters({ scope: "review" }))
+  ]);
+  const schedule = upcoming.entries;
   const canHideSchedule = canManageScheduling(user.membership.role);
 
   return (
@@ -34,19 +43,35 @@ export default async function DashboardPage() {
 
       <section className="metricGrid" aria-label="Indicadores del estudio">
         <div className="metric">
-          <span>Causas abiertas</span>
+          <span>Causas abiertas visibles</span>
           <strong>{cases.length}</strong>
         </div>
         <div className="metric">
-          <span>Próximos ítems</span>
-          <strong>{schedule.length}</strong>
+          <span>Entradas próximas</span>
+          <strong>{upcoming.total}</strong>
         </div>
         <div className="metric">
-          <span>MFA</span>
-          <strong>Listo</strong>
+          <span>Vencidos pendientes</span>
+          <strong>{overdue.total}</strong>
         </div>
       </section>
 
+      {overdue.total > 0 ? (
+        <InlineNotice tone="error">
+          Hay {overdue.total} obligaciones vencidas pendientes.{" "}
+          <Link className="inlineLink" href="/app/calendar?scope=overdue">
+            Revisar vencidos
+          </Link>
+        </InlineNotice>
+      ) : null}
+      {review.total > 0 ? (
+        <InlineNotice>
+          Hay {review.total} vencimientos históricos por revisar.{" "}
+          <Link className="inlineLink" href="/app/calendar?scope=review">
+            Revisar su estado
+          </Link>
+        </InlineNotice>
+      ) : null}
       <div className="grid two" style={{ marginTop: 18 }}>
         <section className="panel" aria-labelledby="dashboard-cases">
           <h2 id="dashboard-cases">Causas abiertas recientes</h2>
@@ -58,6 +83,9 @@ export default async function DashboardPage() {
                     <div>
                       <strong>{caseItem.title}</strong>
                       <p className="muted">{caseItem.clientName}</p>
+                      <Link className="textLink" href={`/app/cases/${caseItem.id}`}>
+                        Ver causa
+                      </Link>
                     </div>
                     <span className="badge">{caseItem.caseNumber}</span>
                   </div>
@@ -81,24 +109,30 @@ export default async function DashboardPage() {
                     <div>
                       <strong>{item.title}</strong>
                       <p className="muted">
-                        {item.caseTitle}
+                        <Link className="inlineLink" href={`/app/cases/${item.caseId}`}>
+                          {item.caseTitle}
+                        </Link>
                         {item.subtitle ? ` · ${item.subtitle}` : ""}
                       </p>
                     </div>
                     <div className="stackedActions">
                       <ScheduleBadge
                         dateLabel={item.dateLabel}
+                        urgencyLabel={item.urgencyLabel}
                         deadlineProximity={item.deadlineProximity}
                         kind={item.kind}
                       />
                       {canHideSchedule && item.kind !== "task" ? (
-                        <form action={hideScheduleItemAction}>
+                        <ActionForm
+                          action={hideScheduleItemAction}
+                          label="Ocultar"
+                          variant="quiet"
+                          pendingLabel="Ocultando…"
+                          confirmation={`“${item.title}” dejará de aparecer en la agenda de todo el estudio. No se elimina de la causa.`}
+                        >
                           <input name="id" type="hidden" value={item.id} />
                           <input name="kind" type="hidden" value={item.kind} />
-                          <button className="secondaryButton compactButton" type="submit">
-                            Ocultar
-                          </button>
-                        </form>
+                        </ActionForm>
                       ) : null}
                     </div>
                   </div>
@@ -110,21 +144,6 @@ export default async function DashboardPage() {
           )}
         </section>
       </div>
-
-      <section
-        className="panel"
-        style={{ marginTop: 18 }}
-        aria-labelledby="security-note"
-      >
-        <h2 id="security-note">Acceso</h2>
-        <p className="muted">
-          Los datos de las causas se leen mediante servicios del servidor y RLS de
-          Supabase. Esta cuenta{" "}
-          {canManageCases(user.membership.role) ? "puede" : "no puede"} crear causas y{" "}
-          {canManageScheduling(user.membership.role) ? "puede" : "no puede"} crear
-          entradas de agenda.
-        </p>
-      </section>
     </>
   );
 }

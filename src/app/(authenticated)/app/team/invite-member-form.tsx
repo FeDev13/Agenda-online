@@ -1,6 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { Button } from "@/components/button";
+import { FormField } from "@/components/form-field";
+import { FormFeedback } from "@/components/form-feedback";
+import { useFormAction } from "@/components/use-form-action";
 
 import { formatFirmRole } from "@/lib/display-labels";
 import type { FirmRole } from "@/types/database";
@@ -15,15 +18,16 @@ const initialState: InviteFirmMemberFormState = {
 const roleOptions: FirmRole[] = ["admin", "lawyer", "paralegal", "read_only"];
 
 export function InviteMemberForm({ canInvite }: { canInvite: boolean }) {
-  const [state, formAction, pending] = useActionState(
-    inviteFirmMemberAction,
-    initialState
-  );
+  const {
+    state: state,
+    formAction: formAction,
+    pending: pending,
+    onReset: formActionReset
+  } = useFormAction(inviteFirmMemberAction, initialState);
 
   return (
-    <form action={formAction} className="formGrid">
-      <div className="field">
-        <label htmlFor="invite-email">Email</label>
+    <form onReset={formActionReset} action={formAction} className="formGrid">
+      <FormField id="invite-email" label="Email" error={state.fieldErrors?.email}>
         <input
           autoComplete="email"
           disabled={!canInvite || pending}
@@ -32,9 +36,12 @@ export function InviteMemberForm({ canInvite }: { canInvite: boolean }) {
           required
           type="email"
         />
-      </div>
-      <div className="field">
-        <label htmlFor="invite-display-name">Nombre visible</label>
+      </FormField>
+      <FormField
+        id="invite-display-name"
+        label="Nombre visible"
+        error={state.fieldErrors?.displayName}
+      >
         <input
           autoComplete="name"
           disabled={!canInvite || pending}
@@ -42,9 +49,8 @@ export function InviteMemberForm({ canInvite }: { canInvite: boolean }) {
           name="displayName"
           type="text"
         />
-      </div>
-      <div className="field">
-        <label htmlFor="invite-role">Rol</label>
+      </FormField>
+      <FormField id="invite-role" label="Rol" error={state.fieldErrors?.role}>
         <select
           defaultValue="read_only"
           disabled={!canInvite || pending}
@@ -58,15 +64,11 @@ export function InviteMemberForm({ canInvite }: { canInvite: boolean }) {
             </option>
           ))}
         </select>
-      </div>
-      {state.message ? (
-        <p aria-live="polite" className={state.ok ? "muted" : "errorText"}>
-          {state.message}
-        </p>
-      ) : null}
-      <button className="button" disabled={!canInvite || pending} type="submit">
+      </FormField>
+      <FormFeedback state={state} />
+      <Button disabled={!canInvite || pending} type="submit" aria-busy={pending}>
         {pending ? "Enviando..." : "Invitar integrante"}
-      </button>
+      </Button>
     </form>
   );
 }

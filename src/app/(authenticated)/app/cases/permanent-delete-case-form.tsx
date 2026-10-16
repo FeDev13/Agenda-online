@@ -1,11 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { Button } from "@/components/button";
+import { FormField } from "@/components/form-field";
+import { FormFeedback } from "@/components/form-feedback";
+import { useFormAction } from "@/components/use-form-action";
 
-import {
-  permanentlyDeleteCaseAction,
-  type CaseFormState
-} from "./actions";
+import { permanentlyDeleteCaseAction, type CaseFormState } from "./actions";
 
 const initialState: CaseFormState = { message: null, ok: false };
 
@@ -18,18 +18,23 @@ export function PermanentDeleteCaseForm({
   caseId,
   caseNumber
 }: PermanentDeleteCaseFormProps) {
-  const [state, formAction, pending] = useActionState(
-    permanentlyDeleteCaseAction,
-    initialState
-  );
+  const {
+    state: state,
+    formAction: formAction,
+    pending: pending,
+    onReset: formActionReset
+  } = useFormAction(permanentlyDeleteCaseAction, initialState);
   const confirmationId = `delete-confirmation-${caseId}`;
 
   return (
-    <form action={formAction} className="permanentDeleteForm">
+    <form onReset={formActionReset} action={formAction} className="permanentDeleteForm">
       <input name="caseId" type="hidden" value={caseId} />
       <input name="caseNumber" type="hidden" value={caseNumber} />
-      <div className="field">
-        <label htmlFor={confirmationId}>Confirmar {caseNumber}</label>
+      <FormField
+        id={confirmationId}
+        label={`Confirmar ${caseNumber}`}
+        error={state.fieldErrors?.confirmation}
+      >
         <input
           autoComplete="off"
           disabled={pending}
@@ -37,19 +42,17 @@ export function PermanentDeleteCaseForm({
           name="confirmation"
           required
         />
-      </div>
-      {state.message ? (
-        <p aria-live="polite" className={state.ok ? "muted" : "errorText"}>
-          {state.message}
-        </p>
-      ) : null}
-      <button
-        className="secondaryButton dangerButton compactButton"
+      </FormField>
+      <FormFeedback state={state} />
+      <Button
+        variant="danger-confirm"
+        compact
         disabled={pending}
         type="submit"
+        aria-busy={pending}
       >
         {pending ? "Eliminando..." : "Eliminar definitivamente"}
-      </button>
+      </Button>
     </form>
   );
 }

@@ -1,41 +1,45 @@
 "use client";
 
-import { useActionState, useId, useState } from "react";
+import { useId, useState } from "react";
+import { Button } from "@/components/button";
+import { FormField } from "@/components/form-field";
+import { FormFeedback } from "@/components/form-feedback";
+import { useFormAction } from "@/components/use-form-action";
+import { ActionForm } from "@/components/action-form";
 
 import type { CaseNoteSummary } from "@/lib/server/case-detail";
 
-import {
-  archiveNoteAction,
-  updateNoteAction,
-  type CaseDetailFormState
-} from "./actions";
+import { archiveNoteAction, updateNoteAction, type CaseDetailFormState } from "./actions";
 
 const initialState: CaseDetailFormState = { message: null, ok: false };
 
 export function CaseNoteItem({
   canManage,
   caseId,
-  note
+  note,
+  timeZone
 }: {
   canManage: boolean;
   caseId: string;
   note: CaseNoteSummary;
+  timeZone: string;
 }) {
   const bodyId = useId();
   const [isEditing, setIsEditing] = useState(false);
-  const [state, formAction, pending] = useActionState(
-    updateNoteAction,
-    initialState
-  );
+  const {
+    state: state,
+    formAction: formAction,
+    pending: pending,
+    onReset: formActionReset
+  } = useFormAction(updateNoteAction, initialState);
 
   return (
     <li className="card">
       {isEditing ? (
-        <form action={formAction} className="formGrid">
+        <form onReset={formActionReset} action={formAction} className="formGrid">
           <input name="caseId" type="hidden" value={caseId} />
           <input name="noteId" type="hidden" value={note.id} />
-          <div className="field">
-            <label htmlFor={bodyId}>Nota</label>
+          <FormField id={bodyId} label="Nota" error={state.fieldErrors?.body}>
             <textarea
               defaultValue={note.body}
               disabled={!canManage || pending}
@@ -43,24 +47,21 @@ export function CaseNoteItem({
               name="body"
               required
             />
-          </div>
-          {state.message ? (
-            <p aria-live="polite" className={state.ok ? "muted" : "errorText"}>
-              {state.message}
-            </p>
-          ) : null}
+          </FormField>
+          <FormFeedback state={state} />
           <div className="inlineForm">
-            <button className="button compactButton" disabled={pending} type="submit">
+            <Button compact disabled={pending} type="submit" aria-busy={pending}>
               {pending ? "Guardando..." : "Guardar"}
-            </button>
-            <button
-              className="secondaryButton compactButton"
+            </Button>
+            <Button
+              variant="secondary"
+              compact
               disabled={pending}
               onClick={() => setIsEditing(false)}
               type="button"
             >
               Cancelar
-            </button>
+            </Button>
           </div>
         </form>
       ) : (
@@ -69,24 +70,27 @@ export function CaseNoteItem({
 
       <div className="actionRow">
         <p className="muted">
-          {note.createdByName} · {new Date(note.createdAt).toLocaleString()}
+          {note.createdByName} ·{" "}
+          {new Date(note.createdAt).toLocaleString("es-AR", { timeZone })}
         </p>
         {canManage && !isEditing ? (
           <div className="inlineForm">
-            <button
-              className="secondaryButton compactButton"
+            <Button
+              variant="secondary"
+              compact
               onClick={() => setIsEditing(true)}
               type="button"
             >
               Editar
-            </button>
-            <form action={archiveNoteAction}>
+            </Button>
+            <ActionForm
+              action={archiveNoteAction}
+              label="Archivar"
+              pendingLabel="Archivando…"
+            >
               <input name="caseId" type="hidden" value={caseId} />
               <input name="noteId" type="hidden" value={note.id} />
-              <button className="secondaryButton compactButton" type="submit">
-                Archivar
-              </button>
-            </form>
+            </ActionForm>
           </div>
         ) : null}
       </div>

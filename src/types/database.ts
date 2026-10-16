@@ -4,6 +4,7 @@ export type Json =
 export type FirmRole = "admin" | "lawyer" | "paralegal" | "read_only";
 export type MembershipStatus = "invited" | "active" | "disabled";
 export type CaseStatus = "open" | "closed" | "archived";
+export type DeadlineStatus = "pending" | "needs_review" | "completed" | "cancelled";
 export type TaskStatus = "open" | "completed" | "archived";
 export type ReminderChannel = "in_app" | "email";
 export type NotificationAlertWindow =
@@ -38,6 +39,10 @@ export type Database = {
       };
       case_deadlines: {
         Row: {
+          status: DeadlineStatus;
+          status_revision: number;
+          status_changed_at: string | null;
+          status_changed_by: string | null;
           id: string;
           firm_id: string;
           case_id: string;
@@ -386,6 +391,22 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      set_deadline_status: {
+        Args: { p_deadline_id: string; p_status: string; p_expected_revision: number };
+        Returns: void;
+      };
+      list_agenda: {
+        Args: {
+          p_firm_id: string;
+          p_scope: string;
+          p_kind: string;
+          p_from: string | null;
+          p_to: string | null;
+          p_page: number;
+        };
+        Returns: Json;
+      };
+
       archive_case: {
         Args: {
           p_case_id: string;

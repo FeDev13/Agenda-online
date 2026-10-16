@@ -1,4 +1,9 @@
-import type { CaseStatus, FirmRole, MembershipStatus, TaskStatus } from "@/types/database";
+import type {
+  CaseStatus,
+  FirmRole,
+  MembershipStatus,
+  TaskStatus
+} from "@/types/database";
 
 const firmRoleLabels: Record<FirmRole, string> = {
   admin: "Administración",
@@ -37,6 +42,8 @@ const auditActionLabels: Record<string, string> = {
   "case.created": "Causa creada",
   "case_member.assigned": "Acceso a causa asignado",
   "case_member.removed": "Acceso a causa removido",
+  "deadline.status_changed": "Estado de vencimiento actualizado",
+  "deadline.review_required": "Vencimiento histórico pendiente de revisión",
   "deadline.created": "Vencimiento creado",
   "document.download_prepared": "Descarga de documento preparada",
   "document.uploaded": "Documento subido",
@@ -84,7 +91,7 @@ export function formatScheduleKind(kind: "deadline" | "event" | "task") {
   }
 
   if (kind === "task") {
-    return "vencimiento";
+    return "tarea";
   }
 
   return "evento";

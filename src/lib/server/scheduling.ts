@@ -8,11 +8,11 @@ import type {
 } from "@/features/cases/validation";
 import { canManageScheduling } from "@/lib/domain/authorization";
 import type { ActiveMembership } from "@/lib/domain/authorization";
+import { listAgenda } from "@/lib/server/agenda";
+import { parseScheduleFilters } from "@/features/calendar/filters";
 import {
   addDaysToDateOnly,
   getDateOnlyInTimeZone,
-  getDeadlineProximity,
-  isDeadlineWithin48Hours,
   type DeadlineProximity
 } from "@/lib/schedule-proximity";
 import { requireActiveMembership } from "@/lib/server/auth";
@@ -28,160 +28,24 @@ export type ScheduleItem = {
   kind: "deadline" | "event" | "task";
   subtitle: string | null;
   title: string;
+  urgencyLabel: string | null;
+  dateKey: string;
 };
-
-type EventRow = {
-  case_id: string;
-  id: string;
-  location: string | null;
-  starts_at: string;
-  timezone: string;
-  title: string;
-};
-
-type TaskRow = {
-  case_id: string;
-  due_on: string;
-  id: string;
-  title: string;
-};
-
-type DeadlineRow = {
-  case_id: string;
-  due_on: string;
-  id: string;
-  rule_source: string | null;
-  title: string;
-};
-
-type CaseTitleRow = {
-  id: string;
-  title: string;
-};
-
-const defaultDisplayTimeZone =
-  process.env.DEFAULT_FIRM_TIMEZONE ?? "America/Argentina/Buenos_Aires";
 
 export async function listUpcomingSchedule(): Promise<ScheduleItem[]> {
-  const { membership } = await requireActiveMembership();
-  const supabase = await createSupabaseServerClient();
-  const now = new Date();
-  const today = getDateOnlyInTimeZone(now, defaultDisplayTimeZone);
-
-  const [eventsResult, deadlinesResult, tasksResult] = await Promise.all([
-    supabase
-      .from("events")
-      .select("id,case_id,title,starts_at,timezone,location")
-      .eq("firm_id", membership.firmId)
-      .is("hidden_at", null)
-      .gte("starts_at", now.toISOString())
-      .order("starts_at", { ascending: true })
-      .limit(20),
-    supabase
-      .from("case_deadlines")
-      .select("id,case_id,title,due_on,rule_source")
-      .eq("firm_id", membership.firmId)
-      .is("hidden_at", null)
-      .gte("due_on", today)
-      .order("due_on", { ascending: true })
-      .limit(20),
-    supabase
-      .from("tasks")
-      .select("id,case_id,title,due_on")
-      .eq("firm_id", membership.firmId)
-      .eq("status", "open")
-      .not("due_on", "is", null)
-      .gte("due_on", today)
-      .order("due_on", { ascending: true })
-      .limit(20)
-  ]);
-
-  if (eventsResult.error || deadlinesResult.error || tasksResult.error) {
-    throw new UserFacingError("No se pudo cargar la agenda.");
-  }
-
-  const eventRows = (eventsResult.data ?? []) as EventRow[];
-  const deadlineRows = (deadlinesResult.data ?? []) as DeadlineRow[];
-  const taskRows = (tasksResult.data ?? []) as TaskRow[];
-  const caseIds = [
-    ...new Set([
-      ...eventRows.map((row) => row.case_id),
-      ...deadlineRows.map((row) => row.case_id),
-      ...taskRows.map((row) => row.case_id)
-    ])
-  ];
-
-  const { data: cases, error: casesError } = caseIds.length
-    ? await supabase
-        .from("cases")
-        .select("id,title")
-        .eq("firm_id", membership.firmId)
-        .in("id", caseIds)
-    : { data: [], error: null };
-
-  if (casesError) {
-    throw new UserFacingError("No se pudo cargar la agenda.");
-  }
-
-  const caseTitles = new Map(
-    ((cases ?? []) as CaseTitleRow[]).map((caseItem) => [caseItem.id, caseItem.title])
-  );
-
-  const events = eventRows.map((row) => ({
-    item: {
-      caseId: row.case_id,
-      caseTitle: caseTitles.get(row.case_id) ?? "Causa",
-      dateLabel: new Intl.DateTimeFormat("es-AR", {
-        dateStyle: "medium",
-        timeStyle: "short",
-        timeZone: row.timezone
-      }).format(new Date(row.starts_at)),
-      deadlineProximity: null,
-      id: row.id,
-      kind: "event" as const,
-      subtitle: row.location,
-      title: row.title
-    },
-    sortKey: row.starts_at
-  }));
-
-  const deadlines = deadlineRows.map((row) => ({
-    item: {
-      caseId: row.case_id,
-      caseTitle: caseTitles.get(row.case_id) ?? "Causa",
-      dateLabel: row.due_on,
-      deadlineProximity: getDeadlineProximity(row.due_on, now, defaultDisplayTimeZone),
-      id: row.id,
-      kind: "deadline" as const,
-      subtitle: row.rule_source,
-      title: row.title
-    },
-    sortKey: `${row.due_on}T00:00:00.000Z`
-  }));
-
-  const tasks = taskRows.map((row) => ({
-    item: {
-      caseId: row.case_id,
-      caseTitle: caseTitles.get(row.case_id) ?? "Causa",
-      dateLabel: row.due_on,
-      deadlineProximity: getDeadlineProximity(row.due_on, now, defaultDisplayTimeZone),
-      id: row.id,
-      kind: "task" as const,
-      subtitle: "Tarea pendiente",
-      title: row.title
-    },
-    sortKey: `${row.due_on}T00:00:00.000Z`
-  }));
-
-  return [...events, ...deadlines, ...tasks]
-    .sort((left, right) => left.sortKey.localeCompare(right.sortKey))
-    .map(({ item }) => item);
+  return (await listAgenda(parseScheduleFilters({}))).entries;
 }
 
 export async function hasImminentScheduleDeadline(membership: ActiveMembership) {
   const supabase = await createSupabaseServerClient();
   const now = new Date();
-  const today = getDateOnlyInTimeZone(now, defaultDisplayTimeZone);
+  const { data: firm, error: firmError } = await supabase
+    .from("firms")
+    .select("default_timezone")
+    .eq("id", membership.firmId)
+    .single();
+  if (firmError || !firm) throw new UserFacingError("No se pudo cargar la agenda.");
+  const today = getDateOnlyInTimeZone(now, firm.default_timezone);
   const cutoff = addDaysToDateOnly(today, 2);
 
   const [deadlinesResult, tasksResult] = await Promise.all([
@@ -189,8 +53,7 @@ export async function hasImminentScheduleDeadline(membership: ActiveMembership) 
       .from("case_deadlines")
       .select("due_on")
       .eq("firm_id", membership.firmId)
-      .is("hidden_at", null)
-      .gte("due_on", today)
+      .in("status", ["pending", "needs_review"])
       .lte("due_on", cutoff)
       .limit(1),
     supabase
@@ -199,7 +62,6 @@ export async function hasImminentScheduleDeadline(membership: ActiveMembership) 
       .eq("firm_id", membership.firmId)
       .eq("status", "open")
       .not("due_on", "is", null)
-      .gte("due_on", today)
       .lte("due_on", cutoff)
       .limit(1)
   ]);
@@ -208,11 +70,7 @@ export async function hasImminentScheduleDeadline(membership: ActiveMembership) 
     return false;
   }
 
-  return [...(deadlinesResult.data ?? []), ...(tasksResult.data ?? [])].some(
-    (row) =>
-      row.due_on !== null &&
-      isDeadlineWithin48Hours(row.due_on, now, defaultDisplayTimeZone)
-  );
+  return Boolean(deadlinesResult.data?.length || tasksResult.data?.length);
 }
 
 export async function createEvent(input: CreateEventInput) {

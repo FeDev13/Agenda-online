@@ -1,4 +1,12 @@
 import Link from "next/link";
+import { ActionForm } from "@/components/action-form";
+import { InlineNotice } from "@/components/inline-notice";
+import {
+  formatDateOnly,
+  formatFileSize,
+  formatFileType,
+  formatDueLabel
+} from "@/lib/presentation";
 
 import { formatCaseStatus, formatTaskStatus } from "@/lib/display-labels";
 import { canManageCaseWork } from "@/lib/domain/authorization";
@@ -34,6 +42,8 @@ export default async function CaseDetailPage({
     listAssignableCaseMembers(caseId)
   ]);
   const canManage = canManageCaseWork(user.membership.role);
+  const displayTimeZone =
+    process.env.DEFAULT_FIRM_TIMEZONE ?? "America/Argentina/Buenos_Aires";
   const canManageAnyNote =
     user.membership.role === "admin" || user.membership.role === "lawyer";
 
@@ -54,20 +64,25 @@ export default async function CaseDetailPage({
         <span className="badge">{formatCaseStatus(caseItem.status)}</span>
       </div>
 
-      <section className="metricGrid" aria-label="Resumen de la causa">
-        <div className="metric">
-          <span>Fecha de apertura</span>
-          <strong>{caseItem.openedOn}</strong>
+      <dl className="panel caseMetadata" aria-label="Resumen de la causa">
+        <div>
+          <dt>Fecha de apertura</dt>
+          <dd>{formatDateOnly(caseItem.openedOn)}</dd>
         </div>
-        <div className="metric">
-          <span>Jurisdicción</span>
-          <strong>{caseItem.jurisdiction ?? "Sin datos"}</strong>
+        <div>
+          <dt>Jurisdicción</dt>
+          <dd>{caseItem.jurisdiction ?? "Sin datos"}</dd>
         </div>
-        <div className="metric">
-          <span>Integrantes</span>
-          <strong>{members.length}</strong>
+        <div>
+          <dt>Integrantes</dt>
+          <dd>{members.length}</dd>
         </div>
-      </section>
+      </dl>
+      <nav className="sectionNav" aria-label="Secciones de la causa">
+        <a href="#notes-title">Notas</a>
+        <a href="#tasks-title">Tareas</a>
+        <a href="#documents-title">Documentos</a>
+      </nav>
 
       {caseItem.description ? (
         <section className="panel" style={{ marginTop: 18 }}>
@@ -79,6 +94,17 @@ export default async function CaseDetailPage({
       <div className="grid two" style={{ marginTop: 18 }}>
         <section className="panel" aria-labelledby="notes-title">
           <h2 id="notes-title">Notas</h2>
+          {canManage ? (
+            <details className="disclosure contextForm">
+              <summary>Agregar nota</summary>
+              <CaseWorkForms
+                canManage={canManage}
+                caseId={caseId}
+                members={members}
+                section="note"
+              />
+            </details>
+          ) : null}
           {notes.length ? (
             <ul className="caseList">
               {notes.map((note) => {
@@ -91,6 +117,7 @@ export default async function CaseDetailPage({
                     caseId={caseId}
                     key={`${note.id}:${note.updatedAt}`}
                     note={note}
+                    timeZone={displayTimeZone}
                   />
                 );
               })}
@@ -102,6 +129,17 @@ export default async function CaseDetailPage({
 
         <section className="panel" aria-labelledby="tasks-title">
           <h2 id="tasks-title">Tareas</h2>
+          {canManage ? (
+            <details className="disclosure contextForm">
+              <summary>Agregar tarea</summary>
+              <CaseWorkForms
+                canManage={canManage}
+                caseId={caseId}
+                members={members}
+                section="task"
+              />
+            </details>
+          ) : null}
           {tasks.length ? (
             <ul className="caseList">
               {tasks.map((task) => (
@@ -111,13 +149,18 @@ export default async function CaseDetailPage({
                       <strong>{task.title}</strong>
                       <p className="muted">
                         {task.assignedToName ?? "Sin asignar"}
-                        {task.dueOn ? ` · vence ${task.dueOn}` : ""}
+                        {task.dueOn
+                          ? ` · ${formatDateOnly(task.dueOn)}${task.status === "open" ? ` · ${formatDueLabel(task.dueOn, new Date(), displayTimeZone) ?? "Con vencimiento"}` : ""}`
+                          : ""}
                       </p>
                     </div>
                     <div className="stackedActions">
                       <span className="badge">{formatTaskStatus(task.status)}</span>
                       {canManage ? (
-                        <form action={updateTaskStatusAction}>
+                        <ActionForm
+                          action={updateTaskStatusAction}
+                          label={task.status === "completed" ? "Reabrir" : "Completar"}
+                        >
                           <input name="caseId" type="hidden" value={caseId} />
                           <input name="taskId" type="hidden" value={task.id} />
                           <input
@@ -125,10 +168,7 @@ export default async function CaseDetailPage({
                             type="hidden"
                             value={task.status === "completed" ? "open" : "completed"}
                           />
-                          <button className="secondaryButton compactButton" type="submit">
-                            {task.status === "completed" ? "Reabrir" : "Completar"}
-                          </button>
-                        </form>
+                        </ActionForm>
                       ) : null}
                     </div>
                   </div>
@@ -147,13 +187,29 @@ export default async function CaseDetailPage({
         aria-labelledby="documents-title"
       >
         <h2 id="documents-title">Documentos</h2>
+        {canManage ? (
+          <details className="disclosure contextForm">
+            <summary>Subir documento</summary>
+            <CaseWorkForms
+              canManage={canManage}
+              caseId={caseId}
+              members={members}
+              section="document"
+            />
+          </details>
+        ) : null}
         {documents.length ? (
-          <div className="tableWrap">
+          <div
+            className="tableWrap"
+            role="region"
+            aria-label="Documentos de la causa"
+            tabIndex={0}
+          >
             <table className="dataTable">
               <thead>
                 <tr>
                   <th scope="col">Documento</th>
-                  <th scope="col">Tipo MIME</th>
+                  <th scope="col">Tipo</th>
                   <th scope="col">Tamaño</th>
                   <th scope="col">Descarga</th>
                 </tr>
@@ -162,8 +218,8 @@ export default async function CaseDetailPage({
                 {documents.map((document) => (
                   <tr key={document.id}>
                     <td>{document.displayName}</td>
-                    <td>{document.mimeType ?? "Sin datos"}</td>
-                    <td>{document.sizeBytes ?? "Sin datos"}</td>
+                    <td>{formatFileType(document.mimeType)}</td>
+                    <td>{formatFileSize(document.sizeBytes)}</td>
                     <td>
                       <a
                         className="textLink"
@@ -182,12 +238,9 @@ export default async function CaseDetailPage({
         )}
       </section>
 
-      <section style={{ marginTop: 18 }}>
-        {!canManage ? (
-          <p className="errorText">Tu rol puede ver esta causa, pero no agregar trabajo.</p>
-        ) : null}
-        <CaseWorkForms canManage={canManage} caseId={caseId} members={members} />
-      </section>
+      {!canManage ? (
+        <InlineNotice>Tu rol puede ver esta causa, pero no agregar trabajo.</InlineNotice>
+      ) : null}
     </>
   );
 }

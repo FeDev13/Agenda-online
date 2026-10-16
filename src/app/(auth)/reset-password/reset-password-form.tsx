@@ -1,12 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useFormAction } from "@/components/use-form-action";
 
-import {
-  requestPasswordResetAction,
-  type PasswordResetRequestState
-} from "./actions";
+import { requestPasswordResetAction, type PasswordResetRequestState } from "./actions";
 
 const initialState: PasswordResetRequestState = {
   message: null,
@@ -14,13 +11,15 @@ const initialState: PasswordResetRequestState = {
 };
 
 export function ResetPasswordForm() {
-  const [state, formAction, pending] = useActionState(
-    requestPasswordResetAction,
-    initialState
-  );
+  const {
+    state: state,
+    formAction: formAction,
+    pending: pending,
+    onReset: formActionReset
+  } = useFormAction(requestPasswordResetAction, initialState);
 
   return (
-    <form action={formAction} className="formGrid">
+    <form onReset={formActionReset} action={formAction} className="formGrid">
       <div className="field">
         <label htmlFor="reset-email">Correo electrónico</label>
         <input

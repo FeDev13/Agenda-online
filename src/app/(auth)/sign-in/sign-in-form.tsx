@@ -1,17 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useFormAction } from "@/components/use-form-action";
 
 import { signInAction, type SignInState } from "./actions";
 
 const initialState: SignInState = { message: null };
 
 export function SignInForm({ next }: { next: string }) {
-  const [state, formAction, pending] = useActionState(signInAction, initialState);
+  const {
+    state: state,
+    formAction: formAction,
+    pending: pending,
+    onReset: formActionReset
+  } = useFormAction(signInAction, initialState);
 
   return (
-    <form action={formAction} className="formGrid">
+    <form onReset={formActionReset} action={formAction} className="formGrid">
       <input name="next" type="hidden" value={next} />
       <div className="field">
         <label htmlFor="email">Correo electronico</label>

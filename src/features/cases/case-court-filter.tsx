@@ -9,7 +9,7 @@ import {
   normalizeCaseCourtFilter
 } from "@/features/cases/filters";
 
-export function CaseCourtSidebarFilter() {
+export function CaseCourtFilter() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
@@ -20,9 +20,9 @@ export function CaseCourtSidebarFilter() {
   const activeCourt = normalizeCaseCourtFilter(searchParams.get("court"));
 
   return (
-    <section className="sidebarFilters" aria-labelledby="case-court-filter-title">
+    <section className="caseFilters" aria-labelledby="case-court-filter-title">
       <strong id="case-court-filter-title">Filtrar por fuero</strong>
-      <div className="sidebarFilterList">
+      <div className="filterList">
         <Link
           aria-current={!activeCourt ? "true" : undefined}
           className={!activeCourt ? "active" : undefined}

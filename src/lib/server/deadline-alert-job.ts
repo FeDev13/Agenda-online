@@ -217,6 +217,7 @@ async function listFirmDeadlines(
     .select("id,firm_id,case_id,due_on")
     .eq("firm_id", firmId)
     .is("hidden_at", null)
+    .eq("status", "pending")
     .in("due_on", targetDates);
 
   if (error) {
@@ -335,6 +336,28 @@ async function sendCandidateAlert(
   await markDeliveryPending(supabase, delivery.id, attemptCount);
 
   try {
+    // Recheck immediately before sending: the deadline may have been resolved
+    // after candidates were loaded. Never put resolved items back into alerts.
+    const table = candidate.item.kind === "deadline" ? "case_deadlines" : "tasks";
+    let query = supabase
+      .from(table)
+      .select("id")
+      .eq("id", candidate.item.id)
+      .eq("firm_id", candidate.item.firmId)
+      .eq("case_id", candidate.item.caseId)
+      .eq("due_on", candidate.item.dueOn)
+      .eq("status", candidate.item.kind === "deadline" ? "pending" : "open");
+    if (candidate.item.kind === "deadline") query = query.is("hidden_at", null);
+    const { data: current, error: currentError } = await query.maybeSingle();
+    if (currentError) throw new Error("No se pudo verificar el estado de la alerta.");
+    if (!current) {
+      const { error: skippedError } = await supabase
+        .from("notification_deliveries")
+        .update({ status: "skipped", last_error: null })
+        .eq("id", delivery.id);
+      if (skippedError) throw new Error("No se pudo registrar la alerta omitida.");
+      return "skipped";
+    }
     const result = await sendEmail(candidate);
     await markDeliverySent(supabase, delivery.id, result.id);
 

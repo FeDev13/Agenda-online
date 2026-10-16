@@ -1,6 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
+import { Button } from "@/components/button";
+import { FormField } from "@/components/form-field";
+import { FormFeedback } from "@/components/form-feedback";
+import { useFormAction } from "@/components/use-form-action";
 
 import type { OpenCaseSummary } from "@/lib/server/cases";
 
@@ -10,30 +13,45 @@ const initialState: ScheduleFormState = { message: null, ok: false };
 
 export function ScheduleForms({
   canCreate,
-  cases
+  cases,
+  timeZone
 }: {
   canCreate: boolean;
   cases: OpenCaseSummary[];
+  timeZone: string;
 }) {
-  const [eventState, eventAction, eventPending] = useActionState(
-    createEventAction,
-    initialState
-  );
+  const {
+    state: eventState,
+    formAction: eventAction,
+    pending: eventPending,
+    onReset: eventActionReset
+  } = useFormAction(createEventAction, initialState);
   const disabled = !canCreate || cases.length === 0;
 
   return (
     <div className="grid">
       <section className="panel" aria-labelledby="new-event-title">
         <h2 id="new-event-title">Crear evento</h2>
-        <form action={eventAction} className="formGrid">
-          <CaseSelect cases={cases} disabled={disabled} id="event-case" />
-          <div className="field">
-            <label htmlFor="event-title">Título</label>
+        <form onReset={eventActionReset} action={eventAction} className="formGrid">
+          <CaseSelect
+            cases={cases}
+            disabled={disabled}
+            id="event-case"
+            error={eventState.fieldErrors?.caseId}
+          />
+          <FormField
+            id="event-title"
+            label="Título"
+            error={eventState.fieldErrors?.title}
+          >
             <input disabled={disabled} id="event-title" name="title" required />
-          </div>
+          </FormField>
           <div className="fieldRow">
-            <div className="field">
-              <label htmlFor="startsAtLocal">Inicio</label>
+            <FormField
+              id="startsAtLocal"
+              label="Inicio"
+              error={eventState.fieldErrors?.startsAtLocal}
+            >
               <input
                 disabled={disabled}
                 id="startsAtLocal"
@@ -41,43 +59,51 @@ export function ScheduleForms({
                 required
                 type="datetime-local"
               />
-            </div>
-            <div className="field">
-              <label htmlFor="endsAtLocal">Fin</label>
+            </FormField>
+            <FormField
+              id="endsAtLocal"
+              label="Fin"
+              error={eventState.fieldErrors?.endsAtLocal}
+            >
               <input
                 disabled={disabled}
                 id="endsAtLocal"
                 name="endsAtLocal"
                 type="datetime-local"
               />
-            </div>
+            </FormField>
           </div>
-          <div className="field">
-            <label htmlFor="timezone">Zona horaria</label>
+          <FormField
+            id="timezone"
+            label="Zona horaria"
+            error={eventState.fieldErrors?.timezone}
+          >
             <input
-              defaultValue="America/Argentina/Buenos_Aires"
+              defaultValue={timeZone}
               disabled={disabled}
               id="timezone"
               name="timezone"
               required
             />
-          </div>
-          <div className="field">
-            <label htmlFor="location">Lugar</label>
+          </FormField>
+          <FormField id="location" label="Lugar" error={eventState.fieldErrors?.location}>
             <input disabled={disabled} id="location" name="location" />
-          </div>
-          <div className="field">
-            <label htmlFor="event-description">Descripción</label>
+          </FormField>
+          <FormField
+            id="event-description"
+            label="Descripción"
+            error={eventState.fieldErrors?.description}
+          >
             <textarea disabled={disabled} id="event-description" name="description" />
-          </div>
-          {eventState.message ? (
-            <p aria-live="polite" className={eventState.ok ? "muted" : "errorText"}>
-              {eventState.message}
-            </p>
-          ) : null}
-          <button className="button" disabled={disabled || eventPending} type="submit">
+          </FormField>
+          <FormFeedback state={eventState} />
+          <Button
+            disabled={disabled || eventPending}
+            type="submit"
+            aria-busy={eventPending}
+          >
             {eventPending ? "Creando..." : "Crear evento"}
-          </button>
+          </Button>
         </form>
       </section>
     </div>
@@ -87,15 +113,16 @@ export function ScheduleForms({
 function CaseSelect({
   cases,
   disabled,
-  id
+  id,
+  error
 }: {
   cases: OpenCaseSummary[];
   disabled: boolean;
   id: string;
+  error?: string;
 }) {
   return (
-    <div className="field">
-      <label htmlFor={id}>Causa</label>
+    <FormField id={id} label="Causa" error={error}>
       <select disabled={disabled} id={id} name="caseId" required>
         <option value="">Seleccionar causa</option>
         {cases.map((caseItem) => (
@@ -104,6 +131,6 @@ function CaseSelect({
           </option>
         ))}
       </select>
-    </div>
+    </FormField>
   );
 }

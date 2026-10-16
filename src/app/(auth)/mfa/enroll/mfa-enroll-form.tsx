@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useFormAction } from "@/components/use-form-action";
 
 import {
   startMfaEnrollmentAction,
@@ -19,19 +19,23 @@ const initialVerifyState: MfaVerifyEnrollmentState = {
 };
 
 export function MfaEnrollForm({ next }: { next: string }) {
-  const [enrollState, enrollAction, enrollPending] = useActionState(
-    startMfaEnrollmentAction,
-    initialEnrollState
-  );
-  const [verifyState, verifyAction, verifyPending] = useActionState(
-    verifyMfaEnrollmentAction,
-    initialVerifyState
-  );
+  const {
+    state: enrollState,
+    formAction: enrollAction,
+    pending: enrollPending,
+    onReset: enrollActionReset
+  } = useFormAction(startMfaEnrollmentAction, initialEnrollState);
+  const {
+    state: verifyState,
+    formAction: verifyAction,
+    pending: verifyPending,
+    onReset: verifyActionReset
+  } = useFormAction(verifyMfaEnrollmentAction, initialVerifyState);
 
   return (
     <div className="formGrid">
       {!enrollState.enrollment ? (
-        <form action={enrollAction} className="formGrid">
+        <form onReset={enrollActionReset} action={enrollAction} className="formGrid">
           <button className="button" disabled={enrollPending} type="submit">
             {enrollPending ? "Generando..." : "Generar segundo factor"}
           </button>
@@ -52,7 +56,7 @@ export function MfaEnrollForm({ next }: { next: string }) {
             />
             <code>{enrollState.enrollment.secret}</code>
           </div>
-          <form action={verifyAction} className="formGrid">
+          <form onReset={verifyActionReset} action={verifyAction} className="formGrid">
             <input
               name="factorId"
               type="hidden"

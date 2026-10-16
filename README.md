@@ -82,6 +82,10 @@ pnpm db:stop
 
 Local Supabase config lives in `supabase/config.toml`. Public signup is disabled globally in the local config; the email provider remains enabled so invited or seeded users can sign in. Users should be created through Supabase invite/admin flows, not public self-registration. TOTP MFA enrollment and verification are enabled locally as the implementation path for mandatory MFA. Local sessions are bounded by a 12-hour absolute timebox and a 2-hour inactivity timeout. Password recovery links redirect through `/auth/callback/reset-password`, which must be allow-listed in hosted Supabase Auth.
 
+## Deadline Lifecycle
+
+The agenda supports upcoming, overdue, historical-review, and resolved views with database filtering and pagination. Legal deadlines can be completed, cancelled, and reopened through an audited, revision-checked workflow. Historical past deadlines require human review. See [`docs/deadline-lifecycle.md`](docs/deadline-lifecycle.md) for migration, permissions, and coordinated release instructions.
+
 ## Deadline Email Alerts
 
 Deadline alerts are sent through Resend from a server-only cron endpoint:
@@ -143,7 +147,7 @@ pnpm build
 pnpm format
 ```
 
-`pnpm test:smoke` runs static route smoke checks with Vitest. `pnpm test:e2e` runs Playwright browser tests against the local Next.js app and Supabase seed users.
+`pnpm test:smoke` runs static route smoke checks with Vitest. `pnpm test:e2e` runs Playwright browser tests against the local Next.js app. Each run provisions a fresh isolated synthetic firm and four synthetic role accounts using a server-only local admin key (`SUPABASE_SECRET_KEY`; the test setup also accepts the older `SUPABASE_SERVICE_ROLE_KEY` name). It refuses remote Supabase hosts, preserves existing accounts and their MFA, and leaves synthetic fixtures in place for auditability. The suite includes axe accessibility scans and large-text/reflow checks.
 
 ## Testing
 

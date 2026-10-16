@@ -1,12 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useFormAction } from "@/components/use-form-action";
 
-import {
-  bootstrapFirmAction,
-  type BootstrapFirmFormState
-} from "./actions";
+import { bootstrapFirmAction, type BootstrapFirmFormState } from "./actions";
 
 const initialState: BootstrapFirmFormState = {
   message: null,
@@ -14,13 +11,15 @@ const initialState: BootstrapFirmFormState = {
 };
 
 export function BootstrapForm() {
-  const [state, formAction, pending] = useActionState(
-    bootstrapFirmAction,
-    initialState
-  );
+  const {
+    state: state,
+    formAction: formAction,
+    pending: pending,
+    onReset: formActionReset
+  } = useFormAction(bootstrapFirmAction, initialState);
 
   return (
-    <form action={formAction} className="formGrid">
+    <form onReset={formActionReset} action={formAction} className="formGrid">
       <div className="field">
         <label htmlFor="firmName">Estudio</label>
         <input
