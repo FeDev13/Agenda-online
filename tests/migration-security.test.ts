@@ -17,6 +17,7 @@ const firmOwnedTables = [
   "clients",
   "cases",
   "case_members",
+  "case_fee_estimates",
   "events",
   "case_deadlines",
   "tasks",

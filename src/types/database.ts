@@ -15,6 +15,23 @@ export type NotificationScheduleItemKind = "deadline" | "task";
 export type Database = {
   public: {
     Tables: {
+      case_fee_estimates: {
+        Row: {
+          id: string;
+          firm_id: string;
+          case_id: string;
+          currency: string;
+          amount_cents: number;
+          revision: number;
+          created_by: string;
+          updated_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       audit_log: {
         Row: {
           id: string;
@@ -391,6 +408,15 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      set_case_fee_estimate: {
+        Args: {
+          p_case_id: string;
+          p_currency: string;
+          p_amount_cents: number;
+          p_expected_revision: number;
+        };
+        Returns: void;
+      };
       set_deadline_status: {
         Args: { p_deadline_id: string; p_status: string; p_expected_revision: number };
         Returns: void;

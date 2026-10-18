@@ -9,6 +9,7 @@ const links = [
   { href: "/app", label: "Inicio" },
   { href: "/app/cases", label: "Causas abiertas" },
   { href: "/app/calendar", label: "Agenda" },
+  { href: "/app/honorarios", label: "Honorarios" },
   { href: "/app/team", label: "Accesos" }
 ];
 

@@ -21,6 +21,29 @@ test.beforeAll(async () => {
   await provisionSyntheticFirm();
 });
 
+test("records and reloads expected case fees", async ({ page }) => {
+  const runId = Date.now().toString(36);
+  const caseTitle = `Honorarios sinteticos ${runId}`;
+  await signIn(page, "admin@example.test");
+  await createCase(page, { caseNumber: `FEES-${runId}`, caseTitle });
+  await page.getByRole("link", { name: "Honorarios", exact: true }).click();
+  const card = page.locator("section.panel").filter({ hasText: caseTitle });
+  await expect(card.getByText("ARS · Sin estimación", { exact: true })).toBeVisible();
+  await card.getByLabel("Ingreso esperado (ARS)").fill("123,45");
+  await card.getByRole("button", { name: "Guardar ARS" }).click();
+  await expect(card.getByText("ARS 123,45", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(card.getByLabel("Ingreso esperado (ARS)")).toHaveValue("123.45");
+  await card.getByLabel("Ingreso esperado (ARS)").fill("-1");
+  await card.getByRole("button", { name: "Guardar ARS" }).click();
+  await expect(
+    card.getByText("Ingresá un importe positivo con hasta dos decimales.")
+  ).toBeVisible();
+  await expect(card.getByText("ARS 123,45", { exact: true })).toBeVisible();
+  await page.reload();
+  await page.screenshot({ path: test.info().outputPath("honorarios-desktop.png"), fullPage: true });
+});
+
 test("creates case work, schedule entries, and document download links", async ({
   page
 }) => {
