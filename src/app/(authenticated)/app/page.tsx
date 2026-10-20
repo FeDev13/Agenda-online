@@ -74,7 +74,7 @@ export default async function DashboardPage() {
       ) : null}
       <div className="grid two" style={{ marginTop: 18 }}>
         <section className="panel" aria-labelledby="dashboard-cases">
-          <h2 id="dashboard-cases">Causas abiertas recientes</h2>
+          <h2 id="dashboard-cases">Últimas causas actualizadas</h2>
           {cases.length ? (
             <ul className="caseList">
               {cases.slice(0, 5).map((caseItem) => (

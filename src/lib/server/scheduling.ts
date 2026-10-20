@@ -96,6 +96,7 @@ export async function createEvent(input: CreateEventInput) {
   }
 
   revalidatePath("/app");
+  revalidatePath("/app/cases");
   revalidatePath("/app/calendar");
 }
 
@@ -118,4 +119,5 @@ export async function hideScheduleItem(input: HideScheduleItemInput) {
 
   revalidatePath("/app");
   revalidatePath("/app/calendar");
+  revalidatePath("/app/cases");
 }

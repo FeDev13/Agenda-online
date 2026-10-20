@@ -54,7 +54,10 @@ export default async function CasesPage({ searchParams }: CasesPageProps) {
       <div className="pageHeader">
         <div>
           <h1>Causas abiertas</h1>
-          <p>Buscá una causa por cliente, número, expediente o juzgado.</p>
+          <p>
+            Causas ordenadas por última actividad. Buscá por cliente, número, expediente o
+            juzgado.
+          </p>
         </div>
       </div>
       {canCreate ? (

@@ -69,4 +69,6 @@ export async function saveFeeEstimate(input: unknown) {
         : "No se pudo guardar el honorario."
     );
   revalidatePath("/app/honorarios");
+  revalidatePath("/app");
+  revalidatePath("/app/cases");
 }

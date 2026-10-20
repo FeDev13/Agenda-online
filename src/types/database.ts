@@ -119,6 +119,7 @@ export type Database = {
           case_number: string;
           title: string;
           status: CaseStatus;
+          last_activity_at: string;
           jurisdiction: string | null;
           court: string | null;
           docket_number: string | null;

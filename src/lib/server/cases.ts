@@ -2,10 +2,7 @@ import "server-only";
 
 import { revalidatePath } from "next/cache";
 
-import {
-  type CaseListFilters,
-  filterCaseSummaries
-} from "@/features/cases/filters";
+import { type CaseListFilters, filterCaseSummaries } from "@/features/cases/filters";
 import {
   toCreateCaseErrorMessage,
   toPermanentDeleteCaseErrorMessage
@@ -71,7 +68,8 @@ export async function listOpenCases(
     .select("id,case_number,title,opened_on,court,docket_number,client_id")
     .eq("firm_id", membership.firmId)
     .eq("status", "open")
-    .order("opened_on", { ascending: false });
+    .order("last_activity_at", { ascending: false })
+    .order("id", { ascending: true });
 
   if (error) {
     throw new UserFacingError("No se pudieron cargar las causas abiertas.");

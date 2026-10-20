@@ -21,6 +21,45 @@ test.beforeAll(async () => {
   await provisionSyntheticFirm();
 });
 
+test("orders both case lists by latest activity rather than opening date", async ({
+  page
+}) => {
+  const runId = Date.now().toString(36);
+  const olderTitle = `Older synthetic activity ${runId}`;
+  const newerTitle = `Newer synthetic activity ${runId}`;
+  await signIn(page, "admin@example.test");
+  await createCase(page, { caseNumber: `ACT-OLD-${runId}`, caseTitle: olderTitle });
+  await createCase(page, { caseNumber: `ACT-NEW-${runId}`, caseTitle: newerTitle });
+
+  async function expectFirstCase(title: string) {
+    for (const path of ["/app", "/app/cases"]) {
+      await page.goto(path);
+      await expect(page.locator(".caseList li").first()).toContainText(title);
+    }
+  }
+
+  await expectFirstCase(newerTitle);
+  await openCase(page, olderTitle);
+  await page.getByText("Agregar tarea", { exact: true }).first().click();
+  await page.locator("#task-title").fill(`Activity task ${runId}`);
+  await page.getByRole("button", { name: "Guardar tarea" }).click();
+  await expect(page.getByText("Tarea guardada.")).toBeVisible();
+  await expectFirstCase(olderTitle);
+
+  await openCase(page, newerTitle);
+  const caseId = new URL(page.url()).pathname.split("/").pop()!;
+  await page.goto("/app/calendar");
+  await page.locator("summary").filter({ hasText: "Crear vencimiento legal" }).click();
+  await page.locator("#deadline-case").selectOption(caseId);
+  await page.locator("#deadline-title").fill(`Activity deadline ${runId}`);
+  await page.locator("#deadline-due-on").fill("2027-01-15");
+  await page.locator("#deadline-rule-source").fill("Synthetic manually confirmed date");
+  await page.locator("#deadline-confirmed").check();
+  await page.getByRole("button", { name: "Crear vencimiento", exact: true }).click();
+  await expect(page.getByText("Vencimiento creado con fecha confirmada.")).toBeVisible();
+  await expectFirstCase(newerTitle);
+});
+
 test("records and reloads expected case fees", async ({ page }) => {
   const runId = Date.now().toString(36);
   const caseTitle = `Honorarios sinteticos ${runId}`;
