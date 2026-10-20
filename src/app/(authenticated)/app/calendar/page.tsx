@@ -149,7 +149,7 @@ export default async function CalendarPage({
               Filtrar
             </button>
             <Link
-              className="textLink"
+              className="secondaryButton"
               href={agendaHref(parseScheduleFilters({}), { scope: filters.scope })}
             >
               Limpiar

@@ -41,7 +41,41 @@ test("records and reloads expected case fees", async ({ page }) => {
   ).toBeVisible();
   await expect(card.getByText("ARS 123,45", { exact: true })).toBeVisible();
   await page.reload();
-  await page.screenshot({ path: test.info().outputPath("honorarios-desktop.png"), fullPage: true });
+  await page.screenshot({
+    path: test.info().outputPath("honorarios-desktop.png"),
+    fullPage: true
+  });
+  const activeLink = page.getByRole("link", { name: "Honorarios", exact: true });
+  const activeBackground = await activeLink.evaluate(
+    (element) => getComputedStyle(element).backgroundColor
+  );
+  await activeLink.hover();
+  await expect
+    .poll(() =>
+      activeLink.evaluate((element) => getComputedStyle(element).backgroundColor)
+    )
+    .not.toBe(activeBackground);
+  await checkAccessibility(page);
+  await page.setViewportSize({ width: 375, height: 812 });
+  await expect
+    .poll(() =>
+      page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)
+    )
+    .toBe(true);
+  const amount = card.getByLabel("Ingreso esperado (ARS)");
+  const save = card.getByRole("button", { name: "Guardar ARS" });
+  const amountBounds = await amount.boundingBox();
+  const saveBounds = await save.boundingBox();
+  expect(amountBounds).not.toBeNull();
+  expect(saveBounds).not.toBeNull();
+  expect(saveBounds!.y).toBeGreaterThanOrEqual(
+    amountBounds!.y + amountBounds!.height + 10
+  );
+  await checkAccessibility(page);
+  await page.screenshot({
+    path: test.info().outputPath("honorarios-mobile.png"),
+    fullPage: true
+  });
 });
 
 test("creates case work, schedule entries, and document download links", async ({
@@ -441,6 +475,7 @@ test("passes automated accessibility checks and preserves reflow at large text s
     "/app/calendar?scope=overdue",
     "/app/calendar?scope=review",
     "/app/calendar?scope=resolved",
+    "/app/honorarios",
     "/app/team"
   ]) {
     await page.goto(path);

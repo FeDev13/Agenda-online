@@ -622,6 +622,10 @@ textarea {
   color: var(--nav-background);
   font-weight: 700;
 }
+.navList a[aria-current="page"]:hover,
+.navList a[aria-current="page"]:focus-visible {
+  background: #dce9ed;
+}
 .skipLink {
   position: fixed;
   top: 8px;
@@ -770,9 +774,22 @@ textarea {
   margin: 24px 0 12px;
 }
 .scheduleFilters {
-  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: end;
   margin-bottom: 24px;
+}
+.scheduleFilters > .inlineForm {
+  grid-column: 1 / -1;
+  justify-content: flex-start;
+}
+.feeEstimates,
+.feeTotals {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.feeEstimates > div {
+  min-width: 0;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
 }
 .tableWrap {
   max-width: 100%;
@@ -897,6 +914,7 @@ section[id] {
   }
 
   .grid.two,
+  .feeEstimates,
   .metricGrid,
   .fieldRow,
   .caseSearchForm,
