@@ -302,6 +302,8 @@ button {
   display: grid;
   gap: 8px;
   justify-items: end;
+  flex-shrink: 0;
+  max-width: 45%;
 }
 
 .cardFooterAction {
@@ -338,14 +340,21 @@ button {
 }
 
 .badge {
-  border-radius: 999px;
+  border-radius: 6px;
   background: var(--panel-subtle);
   color: var(--brand-strong);
   display: inline-block;
   font-size: 0.78rem;
   font-weight: 700;
+  flex-shrink: 0;
+  max-width: 100%;
   padding: 4px 9px;
   white-space: normal;
+  width: fit-content;
+}
+
+.cardHeader > .badge {
+  max-width: 45%;
 }
 
 .deadlineBadge {
@@ -907,6 +916,11 @@ section[id] {
   .stackedActions {
     align-items: start;
     justify-items: start;
+    max-width: 100%;
+  }
+
+  .cardHeader > .badge {
+    max-width: 100%;
   }
 
   .content {
